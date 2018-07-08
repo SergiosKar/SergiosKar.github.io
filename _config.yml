@@ -24,7 +24,7 @@ navigation: # Navigation links
   - {name: 'Contact', link: '/contact'}
 
 tagline: >
-  Hi! I am Sergios and i am a Machine Learning Engineer/Data Scientist. Lets chat...
+  Hi! I am Sergios and I am a Machine Learning Engineer/Data Scientist. Lets chat.
   
 hero_img: posts/sleek_lg.jpg # Main background image: use the path from /assets/img/ => This will output /assets/img/posts/sleek_lg.jpg
 
