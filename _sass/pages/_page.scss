@@ -75,6 +75,18 @@
       line-height: 3.125rem;
     }
   }
+  
+  .hero__meta {
+    font-size: 1.4em;
+    color: $bg-color;
+
+
+    @include breakpoint($md) {
+      padding: 1rem 0;
+      font-size: 2.625em;
+      line-height: 3.125rem;
+    }
+  }
 }
 
 .page-content {
