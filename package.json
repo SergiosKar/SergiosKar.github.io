@@ -1,7 +1,7 @@
 {
-  "name": "sleek",
+  "name": "Sergios Karagiannakos",
   "version": "1.0.0",
-  "description": "Sleek is a modern Jekyll theme focused on speed performance & SEO best practices.",
+  "description": "Sergios Karagiannakos website",
   "main": "gulpfile.js",
   "dependencies": {
     "fg-loadcss": "^1.3.1",
@@ -46,13 +46,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/janczizikow/sleek.git"
+    "url": "git+https://github.com/SergiosKar/SergiosKar.github.io.git"
   },
   "keywords": [],
-  "author": "Jan Czizikow",
+  "author": "Sergios Karagiannakos",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/janczizikow/sleek/issues"
+    "url": "https://github.com/SergiosKar/SergiosKar.github.io/issues"
   },
-  "homepage": "https://github.com/janczizikow/sleek#readme"
+  "homepage": "https://github.com/SergiosKar/SergiosKar.github.io"
 }
