@@ -1,4 +1,11 @@
 
+---
+layout: post
+title: Document clustering
+summary: Use natural language processing to cluster documents based on their content
+featured-img: nlp_20_0
+---
+
 # Document clustering
 
 Lets get started...
@@ -286,7 +293,7 @@ plt.show()
 ```
 
 
-![Clustering result]({{"/assets/img/posts/nlp_files/nlp_20_0.png" | absolute_url}})
+![Clustering result]({{"/assets/img/posts/nlp_20_0.png" | absolute_url}})
 
 
 We observe that the results are not as bad as we initially thought.  Although there is some partial overlapping, the groups are quite distinguished. There is no doubt, however, that we can optimize them much further. 
