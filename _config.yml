@@ -14,6 +14,7 @@ social:
     - https://www.facebook.com/sergios.karagiannakos
     - https://www.linkedin.com/in/sergios-karagiannakos/
     - https://github.com/SergiosKar
+    - https://www.instagram.com/sergios_krg/
 
 # THEME SETTINGS
 navigation: # Navigation links
@@ -31,6 +32,8 @@ email: sergioskarag@gmail.com # email for form submission
 twitter_username: karsergios # replace with your_twitter_username or comment to remove link from footer
 github_username:  SergiosKar # replace with your_github_username or comment to remove link from footer
 instagram_username: sergios_krg # replace with your_instagram_username or comment to remove link from footer
+facebook_username: sergios.karagiannakos
+linkedin_username: sergios-karagiannakos
 
 #disqus:
 #  shortname: janczizikow # to enable comments replace with your_disqus_shortname
