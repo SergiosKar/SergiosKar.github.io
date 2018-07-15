@@ -2,7 +2,6 @@
 title: Sergios Karagiannakos # your site title
 author: Sergios Karagiannakos # You :P
 description: Sergios Karagiannakos personal blog # Meta description of Homepagez
-  Sergios Karagiannakos
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://sergioskar.github.io/" # the base hostname & protocol for your site, e.g. http://example.com
 
