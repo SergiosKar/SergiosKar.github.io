@@ -1,7 +1,7 @@
 # SITE CONFIGURATION
 title: Sergios Karagiannakos # your site title
 author: Sergios Karagiannakos # You :P
-description: Sergios Karagiannakos personal blog # Meta description of Homepagez
+description: Sergios Karagiannakos  # Meta description of Homepagez
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://sergioskar.github.io/" # the base hostname & protocol for your site, e.g. http://example.com
 
@@ -22,7 +22,7 @@ navigation: # Navigation links
   - {name: 'Contact', link: '/contact'}
 
 tagline: >
-  Hi! I am Sergios and I am a Machine Learning Engineer/Data Scientist. Lets chat.
+  Let's build AI
   
 hero_img: posts/sleek_lg.jpg # Main background image: use the path from /assets/img/ => This will output /assets/img/posts/sleek_lg.jpg
 
