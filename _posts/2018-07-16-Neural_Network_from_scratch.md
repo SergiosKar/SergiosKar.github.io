@@ -3,9 +3,8 @@ layout: post
 title: Neural Network from scratch (part 1)
 summary: How to buld a neural network library using C++ and OpenCL
 featured-img: nn
-------
-
 ---
+
 # Neural network library from scratch(part 1)
 
 ## Fully Connected Neural Network
