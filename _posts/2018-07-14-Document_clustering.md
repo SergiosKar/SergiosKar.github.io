@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Document clustering
-summary: Use natural language processing to cluster documents based on their content
+summary: Use unsupervised learning to cluster documents based on their content
 featured-img: nlp_20_0
 ---
 
@@ -11,7 +11,7 @@ Lets get started...
 
 In order to classify the items based on their content, I decided to use K- means algorithm. Due to the fact the the items are un-labeled , it is clearly a unsupervised learning problem and one of the best solution should be K-Means. Of course we can use a different algorithm, such as Gaussian mixture models or even deep learning methods such as Autoencoders. I will use python with Jupyter notebook, to combine the code and the results with the documentation.
 
-I develope the code in Anaconda environment and i use the following dependencies:
+I develop the code in Anaconda environment and i use the following dependencies:
 
 Pandas for data handing
 
