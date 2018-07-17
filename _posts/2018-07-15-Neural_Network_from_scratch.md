@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Neural Network from scratch (part 1)
+title: Neural Network from scratch-part 1
 summary: How to buld a neural network library using C++ and OpenCL
 featured-img: nn
 ---
@@ -62,6 +62,3 @@ typedef struct Layer {
 ```
 
 Since this is plain C, we cant use an std::vector and we need plain C because the abode will be compiled and executed by the actual GPU. But we're getting there.  Please noe that a better way than an array with predefined length would be to malloc the necessary space in memory every time, but that is for some other time.  
-
-
-
