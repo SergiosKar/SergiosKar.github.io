@@ -62,3 +62,59 @@ typedef struct Layer {
 ```
 
 Since this is plain C, we cant use an std::vector and we need plain C because the abode will be compiled and executed by the actual GPU. But we're getting there.  Please noe that a better way than an array with predefined length would be to malloc the necessary space in memory every time, but that is for some other time.  
+
+We build our basic structures for the Node and the Layer so it is time to program the actual Network, which is just a stack of layers.
+
+```C++
+h_netVec = newNetVec;
+
+//input layer
+Layer *inputLayer = layer(h_netVec[0], 0);
+h_layers.push_back(*inputLayer);
+
+///Create the other layers
+for (unsigned int i = 1; i <h_netVec.size(); i++)
+{
+	Layer *hidlayer = layer(h_netVec[i], h_netVec[i - 1]);
+	h_layers.push_back(*hidlayer);
+
+}
+
+```
+
+There it is. Our simple Neural network written in C++. In fact, it is nothing more than a vector of layers, with each layer being a vector of Nodes. You may think that our job is done here. Haha! We are not even close. We have to train our network with actual data. This is the time where OpenCL is coming into play.
+
+Those vectors cannot be accesed bythe GPU so we have to transform them into another structure called Buffer, a basic element of OpenCL. But the logic is exactly the same as before.
+
+```C++
+d_InputBuffer = cl::Buffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float)*inpdim*inpdim);
+
+
+tempbuf = cl::Buffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(Node)*h_layers[0].numOfNodes);
+(OpenCL::clqueue).enqueueWriteBuffer(tempbuf,CL_TRUE,0,sizeof(Node)*h_layers[0].numOfNodes,h_layers[0].nodes);
+d_layersBuffers.push_back(tempbuf);
+
+for (int i = 1; i<h_layers.size(); i++) {
+	tempbuf = cl::Buffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(Node)*h_layers[i].numOfNodes);
+	(OpenCL::clqueue).enqueueWriteBuffer(tempbuf, CL_TRUE,0, sizeof(Node)*h_layers[i].numOfNodes, h_layers[i].nodes);
+	d_layersBuffers.push_back(tempbuf);
+
+}
+
+```
+
+Don't get confused by all those "cl::" , "clqueue" and context. Those are OpenCL stuff. The logic remains intangible.
+
+Before we close the first part ,we have to one more thing. We have to define the OpenCL Kernels. The kernels are the acual code that is executed by the GPU.
+We need 3 kernels in total:
+* One for the forward propagation
+* One for the backward propagation in the output layer
+* One for the backward in the hiddens layer
+
+```C++
+compoutKern = cl::Kernel(OpenCL::clprogram, "compout");
+backpropoutKern = cl::Kernel(OpenCL::clprogram, "backpropout");
+bakckprophidKern = cl::Kernel(OpenCL::clprogram, "backprophid");
+
+```
+I think that is a lot to digest so i am stopping for now. In the next part we are going to write the actual kernel code and finally train our Neural Network. Stay tuned..
