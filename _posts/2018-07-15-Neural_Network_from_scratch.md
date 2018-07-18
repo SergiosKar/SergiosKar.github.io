@@ -185,7 +185,7 @@ nodes[i].delta=delta;
 
 If you feel lost let me remind you the equations for the back propagation algorithm:
 
-![Equations]({{"/assets/img/posts/bpa_equa.jpg" | absolute_url}})
+![Equations]({{"/assets/img/posts/bpa_equat.jpg" | absolute_url}})
 
 Now it all makes sense right?
 
