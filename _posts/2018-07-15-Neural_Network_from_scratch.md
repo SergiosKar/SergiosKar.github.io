@@ -145,5 +145,53 @@ nodes[i].output =sigmoid(t);
 
 ```
 
-$$ y = \gamma \hat{h}+\beta $$
+And for the backward propagation we have:
 
+```c
+kernel void backprophid(global Node*  nodes,global Node * prevnodes,global Node *nextnodes,int nextnumNodes,float a)
+{
+const int n = get_global_size(0);
+const int i = get_global_id(0);
+
+
+
+float delta = 0;
+for (int j = 0; j !=nextnumNodes; j++)
+	delta += nextnodes[j].delta * nextnodes[j].weights[i];
+
+delta *= devsigmoid(nodes[i].output);break;
+nodes[i].delta = delta;
+   
+for (int j = 0; j != nodes[i].numberOfWeights; j++)
+        nodes[i].weights[j] -= a*delta*prevnodes[j].output;
+
+}
+
+
+kernel void backpropout(global Node*  nodes,global Node * prevnodes,global float* targets,float a,int softflag )
+{
+const int n = get_global_size(0);
+const int i = get_global_id(0);
+
+float delta=0;
+
+delta = (nodes[i].output-targets[i])*devsigmoid(nodes[i].output);
+		
+for (int j = 0; j !=nodes[i].numberOfWeights; j++)
+	nodes[i].weights[j] -= a*delta*prevnodes[j].output;
+
+nodes[i].delta=delta;
+}
+```
+
+If you feel lost let me remind you the equations for the back propagation algorithm:
+
+![Equations]({{"/assets/img/posts/bpa_equa.jpg" | absolute_url}})
+
+Now it all makes sense right?
+
+Well that's it. All we have to do is run fed the data and run the kernels . I don't know if you realised it but we are done. We just build our Neura network completely from scratch and train them in GPU.
+
+For the full code please visit my github repository: [Neural netwok library](https://github.com/SergiosKar/Convolutional-Neural-Network)
+
+In the next part we extend the library to include Convolutional Neural Networks. Stay tuned...
