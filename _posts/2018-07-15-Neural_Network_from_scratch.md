@@ -144,7 +144,6 @@ nodes[i].output =sigmoid(t);
 }
 
 ```
-
 And for the backward propagation we have:
 
 ```c
