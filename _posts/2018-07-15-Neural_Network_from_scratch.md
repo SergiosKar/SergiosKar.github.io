@@ -145,5 +145,5 @@ nodes[i].output =sigmoid(t);
 
 ```
 
-$$ y = \gamma \hat{h}+\beta $$
+
 
