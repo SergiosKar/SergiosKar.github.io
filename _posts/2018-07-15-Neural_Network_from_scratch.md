@@ -105,7 +105,7 @@ for (int i = 1; i<h_layers.size(); i++) {
 
 Don't get confused by all those "cl::" , "clqueue" and "context". Those are OpenCL stuff. The logic remains intangible.
 
-Before we close the first part ,we have to one more thing. We have to define the OpenCL Kernels. The kernels are the acual code that is executed by the GPU.
+Before we dive into the exciting part ,we have to one more thing. We have to define the OpenCL Kernels. The kernels are the acual code that is executed by the GPU.
 We need 3 kernels in total:
 * One for the forward propagation
 * One for the backward propagation in the output layer
@@ -117,4 +117,33 @@ backpropoutKern = cl::Kernel(OpenCL::clprogram, "backpropout");
 bakckprophidKern = cl::Kernel(OpenCL::clprogram, "backprophid");
 
 ```
-I think that is a lot to digest so i am stopping for now. In the next part we are going to write the actual kernel code and finally train our Neural Network. Stay tuned..
+
+You guessed it. It is GPU's turn. I am not goint to get into many details about how OpenCL works and how GPU process the data, but there are some things to remember:
+
+1. GPU's have many many cores and that's why they are suitable for parallelization
+2. We consides that each core runs the code for a single Node of the layer
+3. When the layer computations is completed , we procced to the next layer and so on.
+
+Keep those in mind we can now understand easily the next snippet:
+
+```c
+//forward propagation
+kernel void compout(  global Node*  nodes,global Node * prevnodes,int softflag)
+{
+    const int n = get_global_size(0);
+    const int i = get_global_id(0);
+
+    float t = 0;
+    for ( int j = 0; j < nodes[i].numberOfWeights; j++)
+       t += nodes[i].weights[j] * prevnodes[j].output;
+
+t+=0.1;//bias
+
+nodes[i].output =sigmoid(t);	
+
+}
+
+```
+
+$$ y = \gamma \hat{h}+\beta $$
+
