@@ -189,8 +189,8 @@ If you feel lost let me remind you the equations for the back propagation algori
 
 Now it all makes sense right?
 
-Well that's it. All we have to do is run fed the data and run the kernels . I don't know if you realised it but we are done. We just build our Neura network completely from scratch and train them in GPU.
+Well that's it. All we have to do is fed our data and run the kernels . I don't know if you realised it but we are done. We just build our Neura network completely from scratch and train them in GPU.
 
 For the full code please visit my github repository: [Neural netwok library](https://github.com/SergiosKar/Convolutional-Neural-Network)
 
-In the next part we extend the library to include Convolutional Neural Networks. Stay tuned...
+In the next part we'll extend the library to include Convolutional Neural Networks. Stay tuned...
