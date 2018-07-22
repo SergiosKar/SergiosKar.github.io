@@ -10,15 +10,14 @@ featured-img: NN
 In this part we are going to examine how we can improve our library by adding a convolutional neural network structure to use on a dataset of images.
 No one can argue that convolutional neural networks are the best way to classify and train images and this is why they have so much use in computer vision systems. The goal, of course, is to use again GPU's and OpenCL as ConvNets require more computing resourses and memory than plain fully connected networks. 
 
-Let's begin. 
+Let's begin.
 First of all , we have to remember that CovNets in their simpler forms consist of a convolutional layer, a pooling layer and a fully connected layer. Luckily we have implemented the last one . So all it remains are the two first.
 
 ## Convolutional layer
 
-This time i am not gonna get into much details about the C++ part and how we will build the basic structure of our ConvNet (i did that in the first part) , but i will dive on the kernels code, whch i think is the most interesting. In those layers, we convolve the input image with a small size kernel and we acquire the fearure map. 
+This time i am not gonna get into much details about the C++ part and how we will build the basic structure of our ConvNet (i did that in the first part for Fully Connected ayers) , but i will dive on the kernels code, whch i think is the most interesting. In those layers, we convolve the input image with a small size kernel and we acquire the fearure map.
 
 ```c
-
 kernel  void convolve(global float *image, global Filter* filters, global float * featMap,int filterWidth,int inWidth,int featmapdim){
          
      const int xIn=get_global_id(0);//cols
@@ -27,7 +26,7 @@ kernel  void convolve(global float *image, global Filter* filters, global float 
      
      float sum=0;
      for (int r=0;r<filterWidth;r++){
-         for (int c=0;c<filterWidth;c++){
+        for (int c=0;c<filterWidth;c++){
              sum+= filters[z].weights[c*filterWidth +r]*image[(xIn+c)+inWidth*(yIn+r)];
         }
     }
@@ -41,22 +40,23 @@ kernel  void convolve(global float *image, global Filter* filters, global float 
 
 ```
 
-As you can tell, we are based on the hypothesis that each pixel of the feature map is computed parallelly as it is inherently independent from all the others. So if we have an image 28*28 and we use a kernel 5*5, we will need 24x24=576 threads to run simultaneously.
+As you can tell, we are based on the hypothesis that each pixel of the feature map is calculated parallelly as it is inherently independent from all the others. So if we have an image 28x28 and we use a kernel 5x5, we will need 24x24=576 threads to run simultaneously.
 The backward propagation is a little more tricky because there are not many online resourses to actually provide the equations for a convolutional layer.
 
-//Todo: Add images with packpropagation equations from thesis
+![Equations]({{"/assets/img/posts/conv_bpa.jpg" | absolute_url}})
+
+![Equations]({{"/assets/img/posts/conv_bpa_deltas.jpg" | absolute_url}})
 
 If we translate the above in c code we get:
 
 ```c
  kernel void deltas(global Node * nodes,global Node * nextnodes,global float *deltas,global int *indexes,int dim,int nextnumNodes,int pooldim){
  
- const int xIn=get_global_id(0);
- const int yIn=get_global_id(1);
- const int z=get_global_id(2);
+    const int xIn=get_global_id(0);
+    const int yIn=get_global_id(1);
+    const int z=get_global_id(2);
 
-	
-	int i=xIn+yIn*pooldim +z*pooldim*pooldim;
+    int i = xIn+yIn*pooldim +z*pooldim*pooldim;
  
     float delta = 0;
     for (int j = 0; j !=nextnumNodes; j++)
@@ -95,7 +95,7 @@ If we translate the above in c code we get:
 
 ## Pooling layer
 
-The pooling layers is just a down sampling of the feature map into a new map with smaller size. There are two kind of pooling : Avergae and max pooling with the second being the most common used. In max pooling, we just define a filter (usually of size 2x2) and we apply it on the feture map. The goal of the filter is to simply extract the maximum value of the filter window in the image.
+The pooling layers is just a down sampling of the feature map into a new map with smaller size. There are two kind of pooling : Average and max pooling with the second being the most used. In max pooling, we just define a filter (usually of size 2x2) and we apply it on the feture map. The goal of the filter is to simply extract the maximum value of the filter window in the image.
 
 ```c
  kernel void pooling( global float* prevfeatMap,global float* poolMap,global int* indexes,int Width,int pooldim){
@@ -105,7 +105,7 @@ The pooling layers is just a down sampling of the feature map into a new map wit
  const int z=get_global_id(2);
 
      float max=0;
-	 int index=0;
+	int index = 0;
          for (int r=0;r<2;r++){
              for (int c=0;c<2;c++){
                                 
