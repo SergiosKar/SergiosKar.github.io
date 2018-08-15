@@ -29,14 +29,14 @@ img {
   height: auto;
   width: auto;
   vertical-align: middle;
-}
-
-img::selection {
-  background: transparent;
 
   .p &{
     text-align:center;
     }
+}
+
+img::selection {
+  background: transparent; 
 }
 
 figure {
