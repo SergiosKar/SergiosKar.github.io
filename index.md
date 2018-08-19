@@ -6,5 +6,5 @@
 #
 layout: default
 title: Sergios Karagiannakos
-description: A next generation AI blog
+description: A new generation Artificial Intelligence blog
 ---
