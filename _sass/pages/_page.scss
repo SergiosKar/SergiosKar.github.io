@@ -65,16 +65,17 @@
   }
 
   .hero__title {
-    font-size: 3.6em;
+    font-size: 2.6em;
     color: $bg-color;
 
 
     @include breakpoint($md) {
       padding: 1rem 0;
-      font-size: 2.625em;
+      font-size: 3.225em;
       line-height: 3.125rem;
     }
   }
+}
   
   .hero__meta {
     font-size: 1.4em;
@@ -87,7 +88,7 @@
       line-height: 3.125rem;
     }
   }
-}
+
 
 .page-content {
   max-width: 52.5rem;
