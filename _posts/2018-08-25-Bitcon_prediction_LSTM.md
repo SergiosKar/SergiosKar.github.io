@@ -22,19 +22,19 @@ We guess that the answer includes deep learning techniques among others, but we
 couldn’t be certain as no one is willing to reveal their secrets. And why should
 they?
 
-But I am moving away from the purpose of today’s article. A goal is to use a
+But I am moving away from the purpose of today’s article. The goal is to use a
 simple Neural Network and try to predict future prices of bitcoin for a short
 period of time. I decide to use recurrent networks and especially LSTM’s as they
 proven to work really well for regression problems. Recurrent networks are
 nothing more than simple networks with a feedback loop. What I mean, is that
-apart from the standard input they use the information from previous states also
+apart from the standard input, they also use the information from previous states 
 to compute the error gradient. They learn, in other words, from their own
 history.
 
-LSTM’s are an extension of the classic recurrent network, which address the
+LSTM’s are an extension of the classic recurrent networks, which address the
 vanishing gradient problem (the gradient tends to zero as the error propagates
 through many layers recursively). The long-short term memory cell uses an input,
-a forget and an output gate. Those gates help the networks learns what to save,
+a forget and an output gate. Those gates help the network learns what to save,
 what to forget, what to remember, what to pay attention and what to output.
 Pretty neat right? Remember that a gate is nothing more than a simple multilayer
 perceptron, but a smart combination of them can provide amazing results.
@@ -135,7 +135,7 @@ feed the neural network with one price at a time and it forecasts the price
 at the next moment. The model will consist of one LSTM layer with 100 units
 (units is the dimension of its output and we can tune that number) , a
 Dropout layer to reduce overfitting and a Dense( Fully Connected) layer
-which is responsible for the actual predication.
+which is responsible for the actual prediction.
 
 As you can see, it is a very simple model which can be greatly enhanced by
 adding more layers and more data attributes (from twitter feeds to market
@@ -194,7 +194,7 @@ general public opinion about bitcoin
 
 -   Economy general indexes about the current market situation
 
-And to discourage you a little note that the above results might not be as
+And to discourage you, a little note that the above results might not be as
 perfect as they seem. The reason why is that eventually the network learns
 to predict a very close value to the previous one in terms of minimizing the
 mean squared error. In general, historic data are not the best way to
@@ -205,6 +205,6 @@ be used for those problems especially if the are combined with different
 architectures such as convolutional networks.
 
 Well that’s all folks. I hope to have helped you, even a bit, understanding
-what LSTM is and how you can use them.
+what LSTM's are and how you can use them.
 
 Adios…

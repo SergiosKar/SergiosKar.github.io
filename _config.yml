@@ -24,7 +24,7 @@ navigation: # Navigation links
 tagline: >
  A next generation Artificial Intelligence blog
   
-hero_img: posts/sleek_lg.jpg # Main background image: use the path from /assets/img/ => This will output /assets/img/posts/sleek_lg.jpg
+hero_img: background_img2.jpg # Main background image: use the path from /assets/img/ => This will output /assets/img/posts/sleek_lg.jpg
 
 email: sergioskarag@gmail.com # email for form submission
 
