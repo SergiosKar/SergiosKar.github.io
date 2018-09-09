@@ -4,7 +4,7 @@ title: About
 permalink: /about/
 ---
 
- <div class="row" style="display: flex;">
+ <!-- <div class="row" style="display: flex;">
   <div class="column" style="flex: 50%;">
 <p>Hello,</p>
 
@@ -33,9 +33,20 @@ permalink: /about/
             width: 100%;
         }
     }
-  </style>
+  </style> -->
+
+Hello,
+
+I am Sergios Karagiannakos and I am a Machine Learning Engineer / Data Scientist.
 
 
+What do I do...? I build Artificial Intelligence software and Machine Learning applications.
+
+
+But most importantly, I help companies develop their AI products and increase their business value through Data Science.
+
+
+My journey started when I got my master’s degree in Electrical Engineering and Computer Science. It was the last two years of my studies when I got in touch with Machine Learning and it really absorbed me. As a result, my thesis was about the development of a Computer Vision framework using Deep Learning algorithms and GPU programming.
 
 
 Currently, I work as a Data Scientist in Eworx SA, in Athens, Greece where I primarily design Recommendation Systems leveraging Natural Language Processing and Data-centric Web Backends. As a matter of fact, I am going kinda full-stack developer. We are cooperating with big European Union organizations on projects such as European Training Foundation Database, CEDEFOP (European Centre for the Development of Vocational Training) and Skills Panorama websites.
