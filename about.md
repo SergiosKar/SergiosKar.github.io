@@ -4,38 +4,8 @@ title: About
 permalink: /about/
 ---
 
- <!-- <div class="row" style="display: flex;">
-  <div class="column" style="flex: 50%;">
-<p>Hello,</p>
-
-<p>I am Sergios Karagiannakos and I am a Machine Learning Engineer / Data Scientist.</p>
-
-
-<p>What do I do...? I build Artificial Intelligence software and Machine Learning applications.</p>
-
-<p> But most importantly, I help companies develop their AI products and increase their business value through Data Science.</p>
-
-<p>My journey started when I got my master’s degree in Electrical Engineering and Computer Science. It was the last two years of my studies when I got in touch with Machine Learning and it really absorbed me. As a result, my thesis was about the development of a Computer Vision framework using Deep Learning algorithms and GPU programming.</p>
-
-
-  </div>
-  
-  <div class="column" style="flex: 50%;">
-  
-    <img src='{{"/assets/img/website_photo2.jpg" | absolute_url}}'>
-
-  </div>
-</div> 
-
-<style>
-    @media screen and (max-width: 600px) {
-        .column {
-            width: 100%;
-        }
-    }
-  </style> -->
-
 Hello,
+
 
 I am Sergios Karagiannakos and I am a Machine Learning Engineer / Data Scientist.
 
