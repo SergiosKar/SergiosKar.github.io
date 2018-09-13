@@ -20,8 +20,8 @@ about them in a next article. So here we are.
 As I briefly explained in that post, there are two types to modes.
 Discriminative and generative. The first are the most common models, such as
 convolutional or recurrent neural networks, which used to
-distinguish/discriminate patterns in data in order to categorize them in class.
-Application such as image recognition, skin-cancer diagnosis, Ethereum
+distinguish/discriminate patterns in data in order to categorize them in classes.
+Applications such as image recognition, skin-cancer diagnosis, Ethereum
 prediction are all fall in the category of discriminative modes.
 
 The latter are able to generate **new patterns** in data. As a result, they can
@@ -45,9 +45,9 @@ sure you heard about Deepfakes, where they put celebrities faces on any sort of
 video. And if you think you can tell the fakes apart from the real ones, forget
 it. You can’t.
 
-If you clicked on some of the above link, you may have noticed something that is
+If you clicked on some of the above links, you may have noticed something that is
 even more fascinating. All the applications have become possible due to
-something called GANs. GANs or **Gererative Adversarial Networks** is the base
+something called GANs. GANs or **Gererative Adversarial Networks** are the base
 architecture behind most of generative applications. Of course, there are many
 other cool models, such as Variational Autoencoders, Deep Boltzman machines,
 Markov chains but GANs are the reason why there is so much hype in the last
@@ -56,7 +56,7 @@ three years around generative AI.
 ## What are Generative Adversarial Networks?
 
 Generative Adversarial Networks were introduced in 2016 by Ian Goodfellow in one
-of the most promising AI [paper](https://arxiv.org/pdf/1406.2661.pdf) in the
+of the most promising AI [paper](https://arxiv.org/pdf/1406.2661.pdf) of the
 last decade. They are an unsupervised learning technique and they based on a
 simple premise:
 
@@ -70,7 +70,7 @@ this is the main principle behind GANs.
 Ok let’s get into some details. The first model is a neural network, called the
 Generator. Generator’s job is to produce fake data with nothing but noise as
 input. The second model, the Discriminator, receives as input both the real
-images and the fake one (produced by the generator) and learns to identify if
+images and the fake ones (produced by the generator) and learns to identify if
 the image is fake or not. As you put them contesting against each other and
 train them simultaneously the magic begins:
 
@@ -203,8 +203,8 @@ don’t skip those:
 
 -   There is work that needs to be done on GAN’s training
 
--   Real time applications of GAI are … (how can I describe it in a word?
-    Hmmm….) HUUUUUGE.
+-   Real time applications of GAN are … (how can I describe it in a word?
+    Hmmm...) HUUUUUGE.
 
 
 Finito…
