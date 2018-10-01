@@ -211,10 +211,10 @@ function formCheck() {
                 addErrorData( $( input ), "Email address is invalid" );
                 isError = true;
             }
-            if ( $( textarea ).attr( "required", true ) && !validateRequired( $( textarea ).val() ) ) {
-                addErrorData( $( textarea ), "This field is required" );
-                isError = true;
-            }
+            // if ( $( textarea ).attr( "required", true ) && !validateRequired( $( textarea ).val() ) ) {
+            //     addErrorData( $( textarea ), "This field is required" );
+            //     isError = true;
+            // }
         }
         if ( isError === false ) {
             $( "#contactForm" ).submit();

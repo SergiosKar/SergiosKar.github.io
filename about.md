@@ -7,10 +7,10 @@ permalink: /about/
 Hello,
 
 
-I am Sergios Karagiannakos and I am a Machine Learning Engineer / Data Scientist.
+I am Sergios Karagiannakos and I am a **Machine Learning Engineer / Data Scientist**.
 
 
-What do I do...? I build Artificial Intelligence software and Machine Learning applications.
+What do I do...? **I build Artificial Intelligence software and Machine Learning applications**.
 
 
 But most importantly, I help companies develop their AI products and increase their business value through Data Science.
@@ -19,10 +19,10 @@ But most importantly, I help companies develop their AI products and increase th
 My journey started when I got my master’s degree in Electrical Engineering and Computer Science. It was the last two years of my studies when I got in touch with Machine Learning and it really absorbed me. As a result, my thesis was about the development of a Computer Vision framework using Deep Learning algorithms and GPU programming.
 
 
-Currently, I work as a Data Scientist in Eworx SA, in Athens, Greece where I primarily design Recommendation Systems leveraging Natural Language Processing and Data-centric Web Backends. As a matter of fact, I am going kinda full-stack developer. We are cooperating with big European Union organizations on projects such as European Training Foundation Database, CEDEFOP (European Centre for the Development of Vocational Training) and Skills Panorama websites.
+Currently, I work as a Data Scientist in [Eworx SA](https://www.eworx.gr/), in Athens, Greece where I primarily design **Recommendation Systems** leveraging Natural Language Processing and Data-centric Web Backends. As a matter of fact, I am going kinda full-stack developer. We are cooperating with big European Union organizations on projects such as European Training Foundation Database, CEDEFOP (European Centre for the Development of Vocational Training) and Skills Panorama websites.
 
 
-My skills revolve around using Deep Learning for Robotics use cases and designing, deploying Data Science pipelines from data wrangling to prediction.
+My skills revolve around using **Deep Learning for Robotics** use cases and designing, deploying **Data Science pipelines** from data wrangling to prediction.
 
 
 What else you need to know about me? Let’s see... I was born and raised in Sparta, Greece and I always was curious about Mathematics and Physics. Engineering was just the optimal way to satisfy my curiosity about all these different things.
