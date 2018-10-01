@@ -12,7 +12,7 @@ The journey to Reinforcement learning continues… It’s time to analyze the
 infamous Q-learning and see how it became the new standard in the field of AI
 (with a little help from  neural networks).
 
-First things first. In the [last post](https://towardsdatascience.com/the-secrets-behind-reinforcement-learning-25b87befb2d3) , we saw the basic concept
+First things first. In the [last post](https://sergioskar.github.io/Reinforcement_learning/) , we saw the basic concept
 behind Reinforcement Learning and we frame the problem using an agent, an
 environment, a state (S), an action(A) and a reward (R). We talked about how the
 whole process can be described as a Markov Decision Process and we introduced
