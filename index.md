@@ -7,10 +7,10 @@
 layout: default
 title: Sergios Karagiannakos
 description: A new generation Artificial Intelligence blog
-pagination: 
-  enabled: true
-  per_page: 6
-  sort_field: 'date'
-  sort_reverse: true
+#pagination: 
+#  enabled: true
+#  per_page: 6
+#  sort_field: 'date'
+#  sort_reverse: true
 ---
 
