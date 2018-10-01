@@ -180,3 +180,5 @@ Its probably the most exciting area of AI right now and in my opinion, it has
 all the rights to be.
 
 Until my next article, stay tuned.
+
+For the next article in the Reinforcement Learning Journey, click [here](https://sergioskar.github.io/Deep_Q_Learning/).
