@@ -17,7 +17,7 @@ behind Reinforcement Learning and we frame the problem using an agent, an
 environment, a state (S), an action(A) and a reward (R). We talked about how the
 whole process can be described as a Markov Decision Process and we introduced
 the terms Policy and Value. Lastly, we had a quick high-level overview of the
-base methods out there.
+basic methods out there.
 
 Remember that the goal is to find the optimal policy and that policy is a
 mapping between state and actions. So, we need to find which action to take
@@ -43,7 +43,7 @@ possible actions from that state.
 
 When we have the action value function, the Q value, we can simply choose to
 perform the action with the highest value from a state. But how do we find the Q
-value?. The answer is:
+value?. 
 
 ## What is Q learning?
 
@@ -105,7 +105,7 @@ for i in range(episodes):
 ## Exploration vs Exploitation
 
 
-The algorithm, as described above, is greedy algorithm, as it always chooses the
+The algorithm, as described above, is a greedy algorithm, as it always chooses the
 action with the best value. But what if some action has a very small probability
 to produce a very large reward? The agent will never get there. This is fixed by
 adding random exploration. Every once in a while, the agent will perform a
