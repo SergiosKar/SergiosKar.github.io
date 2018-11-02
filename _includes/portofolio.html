@@ -7,21 +7,26 @@
 					<div class="aspect-ratio-keeper"> </div>
 					
 
-					<a class="post-card"  href="{{ project.project-url }}" style="width:100%;display:flex;">
+					<a class="post-card"  href="{{ project.project-url }}" style="width: 100%">
+							<div class="post-card__header">
+									<h2>{{ project.title }}</h2>
+							</div>
+
+							<div style="display:flex;">
 
 							<!-- <span class="link-spanner"></span> -->
 								<figure class="post-card__thumb" style="flex:40%;" >
 									<img class="inner" src="{{ site.url }}/assets/img/portofolio/{{project.featured-img}}.jpg">
 								</figure>
 								<div lass="post-card__inner" style="flex:60%; color: black">
-									<div class="post-card__header">
-											<h3>{{ project.title }}</h3>
-									</div>
+									
 									<div >
 										<p>{{ project.content }}</p>
 									</div>
-								</div>	
-							</a>
+								</div>
+							</div>
+
+						</a>
 				 
 
 
