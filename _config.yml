@@ -19,7 +19,9 @@ social:
 navigation: # Navigation links
   - {name: 'Home', link: '/'}
   - {name: 'About', link: '/about'}
+  - {name: 'Projects', link: '/portofolio'}
   - {name: 'Contact', link: '/contact'}
+
 
 tagline: >
  A next generation Artificial Intelligence blog
@@ -60,6 +62,11 @@ exclude:
 
 include: ['_pages']
 permalink: /:title/
+
+collections:
+  projects:
+    output: true
+    permalink: /portofolio/:path/
 
 # paginate: 6
 # paginate_path: 'page:num/'
