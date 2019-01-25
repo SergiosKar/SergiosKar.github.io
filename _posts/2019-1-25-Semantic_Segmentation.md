@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  Semantic Segmentation in the era of Neural Networks
-summary: Semantic segmentation with dep learning
+summary: Semantic segmentation with deep learning
 featured-img: semseg
 ---
 
@@ -178,7 +178,7 @@ def unet(pretrained_weights = None,input_size = (256,256,1)):
 
     return model
 
-# the code is borrowed form zhixuhao https://github.com/zhixuhao
+# the code is borrowed from zhixuhao https://github.com/zhixuhao
 
 ```
 Do you think I am kidding? That’s it. A bunch of convolutional, pooling and
