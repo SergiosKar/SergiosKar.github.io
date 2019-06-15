@@ -1,0 +1,24 @@
+<!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="{{site.url}}"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          {% for item in site.navigation %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ item.link | relative_url }}" itemprop="url">
+                  <span itemprop="name">{{ item.name }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->

@@ -1,0 +1,427 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Predict Bitcoin price with LSTM | Sergios Karagiannakos</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Predict Bitcoin price with LSTM" />
+<meta name="author" content="Sergios Karagiannakos" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Predict Bitcoin price with LSTM Bitcoin and cryptocurrencies are eating the world. Sure, they all have a huge slump over the past few months but do not be mistaken. Cryptocurrencies are here to stay, and they are expected to overturn and reach higher levels than before. Just think that the total market capitalization of crypto coins at the moments is 215 billion USD and that number was around 800 billion on January. So, who wouldn’t want to predict the future prices of bitcoins? And be sure that most of the big bank, hedge funds and trading companies use some kind of sophisticated algorithm to do exactly that. A sophisticated algorithm? What kind of algorithm you may ask? We guess that the answer includes deep learning techniques among others, but we couldn’t be certain as no one is willing to reveal their secrets. And why should they? But I am moving away from the purpose of today’s article. The goal is to use a simple Neural Network and try to predict future prices of bitcoin for a short period of time. I decide to use recurrent networks and especially LSTM’s as they proven to work really well for regression problems. Recurrent networks are nothing more than simple networks with a feedback loop. What I mean, is that apart from the standard input, they also use the information from previous states to compute the error gradient. They learn, in other words, from their own history. LSTM’s are an extension of the classic recurrent networks, which address the vanishing gradient problem (the gradient tends to zero as the error propagates through many layers recursively). The long-short term memory cell uses an input, a forget and an output gate. Those gates help the network learns what to save, what to forget, what to remember, what to pay attention and what to output. Pretty neat right? Remember that a gate is nothing more than a simple multilayer perceptron, but a smart combination of them can provide amazing results. Let’s dive in a little. Each LSTM cell has its cell state (c) and has the ability to add or remove information to it. The forget gate decides what to remove from the cell state(f), while the input gate (i) decides which values it will update. The tanh layer creates a vector of new candidate values (c_hat), that could be added to the state. The input gate and the new candidate states are combined to update the cell state. Finally, it has to decide what to output (h). That is the responsibility of the output gate(o), which in fact filters the cell state from the unnecessary info. The output will be the feedback for the next round of training. I know that is quite complicate, so feel free to read this one more time. I will wait… But enough with the chit-chat. Let’s write some code. We should start by downloading historical bitcoin prices over the past year from here. The dataset is quite simple as it contains only the date and the price. from google.colab import files files.upload() df = pd.read_csv(&quot;market-price.csv&quot;,header=None) dates=df[&#39;Date&#39;] df.drop([&#39;Date&#39;], 1, inplace=True) df.head() Price 0 4363.054450 1 4360.513317 2 4354.308333 3 4391.673517 4 4607.985450 Before we build our model, we should do a little data preprocessing: Get rid of Date column (we will use it only to visualize our result) Split into train and test set Rescale prices to (0,1) Now its time for the LSTM. The philosophy behind our approach is that we feed the neural network with one price at a time and it forecasts the price at the next moment. The model will consist of one LSTM layer with 100 units (units is the dimension of its output and we can tune that number) , a Dropout layer to reduce overfitting and a Dense( Fully Connected) layer which is responsible for the actual prediction. As you can see, it is a very simple model which can be greatly enhanced by adding more layers and more data attributes (from twitter feeds to market cap and volume). And you should use those, if you are really serious about predict cryptocurrencies prices. Here I am just trying to give you a baseline to work on. For the training process, we will use Adam optimization and the mean squared error as loss function. By the way, Adam (Adaptive moment estimation) optimization is an enhancement of stochastic gradient descent, that adapts the learning rates based on the average first moment and the average second moment. More on that here (from deeplearning.ai course on Coursera). model = tf.keras.models.Sequential() model.add(tf.keras.layers.LSTM(units= 100,activation= &#39;tanh&#39;.input_shape=(None, 1))) model.add(tf.keras.layers.Dropout(rate= 0.2)) model.add(tf.keras.layers.Dense(units= 1, activation= &#39;linear&#39;)) model.compile(optimizer= &#39;adam&#39;, loss= &#39;mse&#39;) After 100 epochs, the model is trained and can be used to predict future prices for the next month. model.fit(x=x_train,y=y_train,batch_size= 1,epochs= 100,verbose=True ); # Epoch 100/100 # 164/164 [==============================] - 1s 4ms/step - loss: 0.0020 inputs = min_max_scaler.transform(inputs) inputs = np.reshape(inputs, (len(inputs), 1, 1)) predicted_price = model.predict(inputs) plt.plot(dates[len(df)-prediction_days:],test_set[:, 0], color=&#39;red&#39;, label=&#39;Real BTC Price&#39;) plt.plot(dates[len(df)-prediction_days:],predicted_price[:, 0], color = &#39;blue&#39;, label = &#39;Predicted BTC Price&#39;) Wow… The results are even better than I expected. And we achieve that in the simplest way possible. Imagine if we use more layers, more epoch, fine tune the parameters and, most importantly, add many more kinds of input. To give you a hint we can: Use twitter feed or news and perform sentiment analysis to capture the general public opinion about bitcoin Include statistical and financial models in the process Economy general indexes about the current market situation And to discourage you, a little note that the above results might not be as perfect as they seem. The reason why is that eventually the network learns to predict a very close value to the previous one in terms of minimizing the mean squared error. In general, historic data are not the best way to predict a price as they are prone to such misunderstandings. However, the potential is here and there is no doubt that they can actually be used for those problems especially if the are combined with different architectures such as convolutional networks. Well that’s all folks. I hope to have helped you, even a bit, understanding what LSTM’s are and how you can use them. Adios…" />
+<meta property="og:description" content="Predict Bitcoin price with LSTM Bitcoin and cryptocurrencies are eating the world. Sure, they all have a huge slump over the past few months but do not be mistaken. Cryptocurrencies are here to stay, and they are expected to overturn and reach higher levels than before. Just think that the total market capitalization of crypto coins at the moments is 215 billion USD and that number was around 800 billion on January. So, who wouldn’t want to predict the future prices of bitcoins? And be sure that most of the big bank, hedge funds and trading companies use some kind of sophisticated algorithm to do exactly that. A sophisticated algorithm? What kind of algorithm you may ask? We guess that the answer includes deep learning techniques among others, but we couldn’t be certain as no one is willing to reveal their secrets. And why should they? But I am moving away from the purpose of today’s article. The goal is to use a simple Neural Network and try to predict future prices of bitcoin for a short period of time. I decide to use recurrent networks and especially LSTM’s as they proven to work really well for regression problems. Recurrent networks are nothing more than simple networks with a feedback loop. What I mean, is that apart from the standard input, they also use the information from previous states to compute the error gradient. They learn, in other words, from their own history. LSTM’s are an extension of the classic recurrent networks, which address the vanishing gradient problem (the gradient tends to zero as the error propagates through many layers recursively). The long-short term memory cell uses an input, a forget and an output gate. Those gates help the network learns what to save, what to forget, what to remember, what to pay attention and what to output. Pretty neat right? Remember that a gate is nothing more than a simple multilayer perceptron, but a smart combination of them can provide amazing results. Let’s dive in a little. Each LSTM cell has its cell state (c) and has the ability to add or remove information to it. The forget gate decides what to remove from the cell state(f), while the input gate (i) decides which values it will update. The tanh layer creates a vector of new candidate values (c_hat), that could be added to the state. The input gate and the new candidate states are combined to update the cell state. Finally, it has to decide what to output (h). That is the responsibility of the output gate(o), which in fact filters the cell state from the unnecessary info. The output will be the feedback for the next round of training. I know that is quite complicate, so feel free to read this one more time. I will wait… But enough with the chit-chat. Let’s write some code. We should start by downloading historical bitcoin prices over the past year from here. The dataset is quite simple as it contains only the date and the price. from google.colab import files files.upload() df = pd.read_csv(&quot;market-price.csv&quot;,header=None) dates=df[&#39;Date&#39;] df.drop([&#39;Date&#39;], 1, inplace=True) df.head() Price 0 4363.054450 1 4360.513317 2 4354.308333 3 4391.673517 4 4607.985450 Before we build our model, we should do a little data preprocessing: Get rid of Date column (we will use it only to visualize our result) Split into train and test set Rescale prices to (0,1) Now its time for the LSTM. The philosophy behind our approach is that we feed the neural network with one price at a time and it forecasts the price at the next moment. The model will consist of one LSTM layer with 100 units (units is the dimension of its output and we can tune that number) , a Dropout layer to reduce overfitting and a Dense( Fully Connected) layer which is responsible for the actual prediction. As you can see, it is a very simple model which can be greatly enhanced by adding more layers and more data attributes (from twitter feeds to market cap and volume). And you should use those, if you are really serious about predict cryptocurrencies prices. Here I am just trying to give you a baseline to work on. For the training process, we will use Adam optimization and the mean squared error as loss function. By the way, Adam (Adaptive moment estimation) optimization is an enhancement of stochastic gradient descent, that adapts the learning rates based on the average first moment and the average second moment. More on that here (from deeplearning.ai course on Coursera). model = tf.keras.models.Sequential() model.add(tf.keras.layers.LSTM(units= 100,activation= &#39;tanh&#39;.input_shape=(None, 1))) model.add(tf.keras.layers.Dropout(rate= 0.2)) model.add(tf.keras.layers.Dense(units= 1, activation= &#39;linear&#39;)) model.compile(optimizer= &#39;adam&#39;, loss= &#39;mse&#39;) After 100 epochs, the model is trained and can be used to predict future prices for the next month. model.fit(x=x_train,y=y_train,batch_size= 1,epochs= 100,verbose=True ); # Epoch 100/100 # 164/164 [==============================] - 1s 4ms/step - loss: 0.0020 inputs = min_max_scaler.transform(inputs) inputs = np.reshape(inputs, (len(inputs), 1, 1)) predicted_price = model.predict(inputs) plt.plot(dates[len(df)-prediction_days:],test_set[:, 0], color=&#39;red&#39;, label=&#39;Real BTC Price&#39;) plt.plot(dates[len(df)-prediction_days:],predicted_price[:, 0], color = &#39;blue&#39;, label = &#39;Predicted BTC Price&#39;) Wow… The results are even better than I expected. And we achieve that in the simplest way possible. Imagine if we use more layers, more epoch, fine tune the parameters and, most importantly, add many more kinds of input. To give you a hint we can: Use twitter feed or news and perform sentiment analysis to capture the general public opinion about bitcoin Include statistical and financial models in the process Economy general indexes about the current market situation And to discourage you, a little note that the above results might not be as perfect as they seem. The reason why is that eventually the network learns to predict a very close value to the previous one in terms of minimizing the mean squared error. In general, historic data are not the best way to predict a price as they are prone to such misunderstandings. However, the potential is here and there is no doubt that they can actually be used for those problems especially if the are combined with different architectures such as convolutional networks. Well that’s all folks. I hope to have helped you, even a bit, understanding what LSTM’s are and how you can use them. Adios…" />
+<link rel="canonical" href="//bitcon_prediction_lstm/" />
+<meta property="og:url" content="//bitcon_prediction_lstm/" />
+<meta property="og:site_name" content="Sergios Karagiannakos" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-08-25T00:00:00+03:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","url":"//bitcon_prediction_lstm/","headline":"Predict Bitcoin price with LSTM","dateModified":"2018-08-25T00:00:00+03:00","datePublished":"2018-08-25T00:00:00+03:00","mainEntityOfPage":{"@type":"WebPage","@id":"//bitcon_prediction_lstm/"},"author":{"@type":"Person","name":"Sergios Karagiannakos"},"description":"Predict Bitcoin price with LSTM Bitcoin and cryptocurrencies are eating the world. Sure, they all have a huge slump over the past few months but do not be mistaken. Cryptocurrencies are here to stay, and they are expected to overturn and reach higher levels than before. Just think that the total market capitalization of crypto coins at the moments is 215 billion USD and that number was around 800 billion on January. So, who wouldn’t want to predict the future prices of bitcoins? And be sure that most of the big bank, hedge funds and trading companies use some kind of sophisticated algorithm to do exactly that. A sophisticated algorithm? What kind of algorithm you may ask? We guess that the answer includes deep learning techniques among others, but we couldn’t be certain as no one is willing to reveal their secrets. And why should they? But I am moving away from the purpose of today’s article. The goal is to use a simple Neural Network and try to predict future prices of bitcoin for a short period of time. I decide to use recurrent networks and especially LSTM’s as they proven to work really well for regression problems. Recurrent networks are nothing more than simple networks with a feedback loop. What I mean, is that apart from the standard input, they also use the information from previous states to compute the error gradient. They learn, in other words, from their own history. LSTM’s are an extension of the classic recurrent networks, which address the vanishing gradient problem (the gradient tends to zero as the error propagates through many layers recursively). The long-short term memory cell uses an input, a forget and an output gate. Those gates help the network learns what to save, what to forget, what to remember, what to pay attention and what to output. Pretty neat right? Remember that a gate is nothing more than a simple multilayer perceptron, but a smart combination of them can provide amazing results. Let’s dive in a little. Each LSTM cell has its cell state (c) and has the ability to add or remove information to it. The forget gate decides what to remove from the cell state(f), while the input gate (i) decides which values it will update. The tanh layer creates a vector of new candidate values (c_hat), that could be added to the state. The input gate and the new candidate states are combined to update the cell state. Finally, it has to decide what to output (h). That is the responsibility of the output gate(o), which in fact filters the cell state from the unnecessary info. The output will be the feedback for the next round of training. I know that is quite complicate, so feel free to read this one more time. I will wait… But enough with the chit-chat. Let’s write some code. We should start by downloading historical bitcoin prices over the past year from here. The dataset is quite simple as it contains only the date and the price. from google.colab import files files.upload() df = pd.read_csv(&quot;market-price.csv&quot;,header=None) dates=df[&#39;Date&#39;] df.drop([&#39;Date&#39;], 1, inplace=True) df.head() Price 0 4363.054450 1 4360.513317 2 4354.308333 3 4391.673517 4 4607.985450 Before we build our model, we should do a little data preprocessing: Get rid of Date column (we will use it only to visualize our result) Split into train and test set Rescale prices to (0,1) Now its time for the LSTM. The philosophy behind our approach is that we feed the neural network with one price at a time and it forecasts the price at the next moment. The model will consist of one LSTM layer with 100 units (units is the dimension of its output and we can tune that number) , a Dropout layer to reduce overfitting and a Dense( Fully Connected) layer which is responsible for the actual prediction. As you can see, it is a very simple model which can be greatly enhanced by adding more layers and more data attributes (from twitter feeds to market cap and volume). And you should use those, if you are really serious about predict cryptocurrencies prices. Here I am just trying to give you a baseline to work on. For the training process, we will use Adam optimization and the mean squared error as loss function. By the way, Adam (Adaptive moment estimation) optimization is an enhancement of stochastic gradient descent, that adapts the learning rates based on the average first moment and the average second moment. More on that here (from deeplearning.ai course on Coursera). model = tf.keras.models.Sequential() model.add(tf.keras.layers.LSTM(units= 100,activation= &#39;tanh&#39;.input_shape=(None, 1))) model.add(tf.keras.layers.Dropout(rate= 0.2)) model.add(tf.keras.layers.Dense(units= 1, activation= &#39;linear&#39;)) model.compile(optimizer= &#39;adam&#39;, loss= &#39;mse&#39;) After 100 epochs, the model is trained and can be used to predict future prices for the next month. model.fit(x=x_train,y=y_train,batch_size= 1,epochs= 100,verbose=True ); # Epoch 100/100 # 164/164 [==============================] - 1s 4ms/step - loss: 0.0020 inputs = min_max_scaler.transform(inputs) inputs = np.reshape(inputs, (len(inputs), 1, 1)) predicted_price = model.predict(inputs) plt.plot(dates[len(df)-prediction_days:],test_set[:, 0], color=&#39;red&#39;, label=&#39;Real BTC Price&#39;) plt.plot(dates[len(df)-prediction_days:],predicted_price[:, 0], color = &#39;blue&#39;, label = &#39;Predicted BTC Price&#39;) Wow… The results are even better than I expected. And we achieve that in the simplest way possible. Imagine if we use more layers, more epoch, fine tune the parameters and, most importantly, add many more kinds of input. To give you a hint we can: Use twitter feed or news and perform sentiment analysis to capture the general public opinion about bitcoin Include statistical and financial models in the process Economy general indexes about the current market situation And to discourage you, a little note that the above results might not be as perfect as they seem. The reason why is that eventually the network learns to predict a very close value to the previous one in terms of minimizing the mean squared error. In general, historic data are not the best way to predict a price as they are prone to such misunderstandings. However, the potential is here and there is no doubt that they can actually be used for those problems especially if the are combined with different architectures such as convolutional networks. Well that’s all folks. I hope to have helped you, even a bit, understanding what LSTM’s are and how you can use them. Adios…","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png">
+  <link rel="manifest" href="/assets/img/icons/site.webmanifest">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico">
+  <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
+  <meta name="application-name" content="Sergios Karagiannakos">
+  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
+  <!-- <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77"> -->
+  <meta name="theme-color" content="#ffffff">
+
+  
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-WMXQPRS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-WMXQPRS');
+</script>
+
+
+  
+
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+</head>
+
+
+  <body class="site">
+
+    
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMXQPRS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    <!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="/"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" itemprop="url">
+                  <span itemprop="name">Home</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about" itemprop="url">
+                  <span itemprop="name">About</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/portfolio" itemprop="url">
+                  <span itemprop="name">Portfolio</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/blog" itemprop="url">
+                  <span itemprop="name">Blog</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/contact" itemprop="url">
+                  <span itemprop="name">Contact</span>
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->
+
+    
+
+  <div class="hero" style="background-image: url( //assets/img/posts/btc_prediction_plot.jpg">
+  
+    <div class="hero__wrap">
+      
+      <h2 class="hero__title">Predict Bitcoin price with LSTM</h2>
+      <p class="hero__meta">
+        
+        
+                
+        
+        <span class="far fa-clock"> &nbsp Aug 25, 2018</span>
+        <span>&nbsp &nbsp</span>
+        <span class="far fa-calendar">  &nbsp 
+            7 mins
+         read</span>
+      </p>
+    </div>
+  </div>
+
+  
+
+
+        
+    <div class="container">
+        <article class="post-content" itemprop="articleBody">
+
+        <h1 id="predict-bitcoin-price-with-lstm">Predict Bitcoin price with LSTM</h1>
+
+<p>Bitcoin and cryptocurrencies are eating the world. Sure, they all have a huge
+slump over the past few months but do not be mistaken. Cryptocurrencies are here
+to stay, and they are expected to overturn and reach higher levels than before.
+Just think that the total market capitalization of crypto coins at the moments
+is 215 billion USD and that number was around 800 billion on January.</p>
+
+<p>So, who wouldn’t want to predict the future prices of bitcoins? And be sure that
+most of the big bank, hedge funds and trading companies use some kind of
+sophisticated algorithm to do exactly that. A sophisticated algorithm? What kind
+of algorithm you may ask?</p>
+
+<p>We guess that the answer includes deep learning techniques among others, but we
+couldn’t be certain as no one is willing to reveal their secrets. And why should
+they?</p>
+
+<p>But I am moving away from the purpose of today’s article. The goal is to use a
+simple Neural Network and try to predict future prices of bitcoin for a short
+period of time. I decide to use recurrent networks and especially LSTM’s as they
+proven to work really well for regression problems. Recurrent networks are
+nothing more than simple networks with a feedback loop. What I mean, is that
+apart from the standard input, they also use the information from previous states 
+to compute the error gradient. They learn, in other words, from their own
+history.</p>
+
+<p>LSTM’s are an extension of the classic recurrent networks, which address the
+vanishing gradient problem (the gradient tends to zero as the error propagates
+through many layers recursively). The long-short term memory cell uses an input,
+a forget and an output gate. Those gates help the network learns what to save,
+what to forget, what to remember, what to pay attention and what to output.
+Pretty neat right? Remember that a gate is nothing more than a simple multilayer
+perceptron, but a smart combination of them can provide amazing results.</p>
+
+<p><img src="//assets/img/posts/lstm_cll.jpg" alt="LSTM cell" /></p>
+
+<p>Let’s dive in a little.</p>
+
+<p>Each LSTM cell has its cell state (c) and has the ability to add or remove information to it.</p>
+
+<p>The forget gate decides what to remove from the cell state(f), while the input gate (i) decides which values it will update.</p>
+
+<p>The tanh layer creates a vector of new candidate values (c_hat), that could be added to the state.</p>
+
+<p>The input gate and the new candidate states are combined to update the cell state.</p>
+
+<p>Finally, it has to decide what to output (h). That is the responsibility of the output gate(o), which in fact filters the cell state from the unnecessary info. The output will be the feedback for the next round of training.</p>
+
+<p>I know that is quite complicate, so feel free to read this one more time. I will wait…</p>
+
+<p><img src="//assets/img/posts/lstm_equations.jpg" alt="LSTM equations" /></p>
+
+<p>But enough with the chit-chat. Let’s write some code. We should start by
+downloading historical bitcoin prices over the past year from
+<a href="https://www.blockchain.com/charts/market-price?timespan=all">here</a>. The dataset
+is quite simple as it contains only the date and the price.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">google.colab</span> <span class="kn">import</span> <span class="n">files</span>
+<span class="n">files</span><span class="o">.</span><span class="n">upload</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s">"market-price.csv"</span><span class="p">,</span><span class="n">header</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+<span class="n">dates</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s">'Date'</span><span class="p">]</span>
+<span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s">'Date'</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div></div>
+<div>
+
+<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Price</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>4363.054450</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>4360.513317</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>4354.308333</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4391.673517</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4607.985450</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>Before we build our model, we should do a little data preprocessing:</p>
+
+<ul>
+  <li>
+    <p>Get rid of Date column (we will use it only to visualize our result)</p>
+  </li>
+  <li>
+    <p>Split into train and test set</p>
+  </li>
+  <li>
+    <p>Rescale prices to (0,1)</p>
+  </li>
+</ul>
+
+<p>Now its time for the LSTM. The philosophy behind our approach is that we
+feed the neural network with one price at a time and it forecasts the price
+at the next moment. The model will consist of one LSTM layer with 100 units
+(units is the dimension of its output and we can tune that number) , a
+Dropout layer to reduce overfitting and a Dense( Fully Connected) layer
+which is responsible for the actual prediction.</p>
+
+<p>As you can see, it is a very simple model which can be greatly enhanced by
+adding more layers and more data attributes (from twitter feeds to market
+cap and volume). And you should use those, if you are really serious about
+predict cryptocurrencies prices. Here I am just trying to give you a
+baseline to work on.</p>
+
+<p>For the training process, we will use Adam optimization and the mean squared
+error as loss function.</p>
+
+<p>By the way, Adam (Adaptive moment estimation) optimization is an enhancement
+of stochastic gradient descent, that adapts the learning rates based on the
+average first moment and the average second moment. More on that
+<a href="https://www.coursera.org/lecture/deep-neural-network/adam-optimization-algorithm-w9VCZ">here</a>
+(from deeplearning.ai course on Coursera).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">LSTM</span><span class="p">(</span><span class="n">units</span><span class="o">=</span> <span class="mi">100</span><span class="p">,</span><span class="n">activation</span><span class="o">=</span> <span class="s">'tanh'</span><span class="o">.</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">rate</span><span class="o">=</span> <span class="mf">0.2</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="n">units</span><span class="o">=</span> <span class="mi">1</span><span class="p">,</span>  <span class="n">activation</span><span class="o">=</span> <span class="s">'linear'</span><span class="p">))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="nb">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span> <span class="s">'adam'</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span> <span class="s">'mse'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>After 100 epochs, the model is trained and can be used to predict future
+prices for the next month.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="n">y_train</span><span class="p">,</span><span class="n">batch_size</span><span class="o">=</span> <span class="mi">1</span><span class="p">,</span><span class="n">epochs</span><span class="o">=</span> <span class="mi">100</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="bp">True</span> <span class="p">);</span>
+
+<span class="c1"># Epoch 100/100
+# 164/164 [==============================] - 1s 4ms/step - loss: 0.0020
+</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">min_max_scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">predicted_price</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dates</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">-</span><span class="n">prediction_days</span><span class="p">:],</span><span class="n">test_set</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s">'red'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'Real BTC Price'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dates</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">-</span><span class="n">prediction_days</span><span class="p">:],</span><span class="n">predicted_price</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">color</span> <span class="o">=</span> <span class="s">'blue'</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s">'Predicted BTC Price'</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<p><img src="//assets/img/posts/btc_prediction_plot.jpg" alt="Predict results" /></p>
+
+<p>Wow… The results are even better than I expected. And we achieve that in the
+simplest way possible. Imagine if we use more layers, more epoch, fine tune
+the parameters and, most importantly, add many more kinds of input. To give
+you a hint we can:</p>
+
+<p>Use twitter feed or news and perform sentiment analysis to capture the
+general public opinion about bitcoin</p>
+
+<ul>
+  <li>
+    <p>Include statistical and financial models in the process</p>
+  </li>
+  <li>
+    <p>Economy general indexes about the current market situation</p>
+  </li>
+</ul>
+
+<p>And to discourage you, a little note that the above results might not be as
+perfect as they seem. The reason why is that eventually the network learns
+to predict a very close value to the previous one in terms of minimizing the
+mean squared error. In general, historic data are not the best way to
+predict a price as they are prone to such misunderstandings.</p>
+
+<p>However, the potential is here and there is no doubt that they can actually
+be used for those problems especially if the are combined with different
+architectures such as convolutional networks.</p>
+
+<p>Well that’s all folks. I hope to have helped you, even a bit, understanding
+what LSTM’s are and how you can use them.</p>
+
+<p>Adios…</p>
+
+
+        </article>
+        <div class="post-content controls__inner">
+        <div class="controls__item prev">
+            
+
+            <span>Previous</span>
+            <a href="/NALU/">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="fillColor" d="M5.647 1.718c.37-.434.323-1.09-.106-1.465A1.016 1.016 0 0 0 4.095.36L.25 4.875a1.05 1.05 0 0 0 .017 1.378l3.95 4.407c.38.424 1.03.456 1.448.07a1.05 1.05 0 0 0 .07-1.468l-3.34-3.725 3.253-3.819z"/>
+                    </svg>
+                </span>
+            Explain Neural Arithmetic L...
+            </a>
+            
+        </div>
+
+        <div class="controls__item next">
+            
+            <span>Next</span>
+            <a href="/Self_driving_cars/">
+            Self-driving cars using Dee...
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="#fillColor" d="M.353 9.282c-.37.434-.323 1.09.106 1.465a1.016 1.016 0 0 0 1.446-.107L5.75 6.125a1.05 1.05 0 0 0-.017-1.378L1.784.34A1.015 1.015 0 0 0 .336.27a1.05 1.05 0 0 0-.07 1.468l3.34 3.725L.353 9.282z"/>
+                </svg>
+                </span>
+            </a>
+            
+        </div>
+        </div>
+    </div>
+
+
+  
+
+
+    
+
+<section class="paralax-mf footer-paralax bg-image " >
+<footer class="site-footer">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-md-12 text-center">
+        <p>
+          <a href="https://www.linkedin.com/in/sergios-karagiannakos " class="social-item"><span class="fab fa-linkedin"></span></a>
+          <a href="https://www.instagram.com/sergios_krg" class="social-item"><span class="fab fa-instagram"></span></a>
+          <a href="https://www.twitter.com/karsergios" class="social-item"><span class="fab fa-twitter"></span></a>
+          <a href="https://www.facebook.com/sergios.karagiannakos" class="social-item"><span class="fab fa-facebook"></span></a>
+          <a href="https://github.com/SergiosKar" class="social-item"><span class="fab fa-github"></span></a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+        <p class="col-12 text-center footer_text">
+        <span>&copy; 2019 Sergios Karagiannakos. All rights reserved.</span>
+        </p>
+    </div>
+  </div>
+</footer>
+</section>
+<!-- JS -->
+ <!-- JavaScript Libraries -->
+ <script src="//lib/jquery/jquery.min.js"></script>
+ <script src="//lib/jquery/jquery-migrate.min.js"></script>
+ <script src="//lib/popper/popper.min.js"></script>
+ <script src="//lib/bootstrap/js/bootstrap.min.js"></script>
+ <script src="//lib/easing/easing.min.js"></script>
+ <script src="//lib/counterup/jquery.waypoints.min.js"></script>
+ <script src="//lib/counterup/jquery.counterup.js"></script>
+ <script src="//lib/lightbox/js/lightbox.min.js"></script>
+ <script src="//lib/typed/typed.min.js"></script>
+ <script src="//js/scripts.js"></script>
+ <script src="//js/contact_form.js"></script>
+
+
+
+  </body>
+
+</html>
+
+
+

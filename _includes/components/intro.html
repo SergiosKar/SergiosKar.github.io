@@ -1,0 +1,17 @@
+<!--/ Intro Skew Star /-->
+<div id="intro_image" class="intro bg-image" style="background-image: url( {{"/assets/img/website_photo2.jpg" | absolute_url}})">
+    <div class="overlay-itro"></div>
+    <div class="intro-content display-table">
+      <div class="table-cell">
+        <div class="container">
+          <!--<p class="display-6 color-d">Hello, world!</p>-->
+          <h1 class="intro-title mb-4">{{page.title }}</h1>
+          {% if page.title=='Projects' %}
+          <a class="btn btn-primary" href="{{site.url}}/assets/{{page.CV}}">Download CV</a>
+          {% endif %}
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/ Intro Skew End /-->	

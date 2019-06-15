@@ -1,0 +1,418 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Localization and Object Detection with Deep Learning | Sergios Karagiannakos</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Localization and Object Detection with Deep Learning" />
+<meta name="author" content="Sergios Karagiannakos" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Localization and Object Detection with Deep Learning (part 1) Localization and Object detection are two of the core tasks in Computer Vision , as they are applied in many real-world applications such as Autonomous vehicles and Robotics. So, if you want to work in these industries as a Computer vision specialist or you want to build a relative product , you better have a good grasp of them. But what are they? What Object detection and localization means? And why we group them as they are one thing? First things first. Let’s do a quick recap of the most used terms and their meaning to avoid misconceptions: Classification/Recognition: Given an image with an object , find out what that object is. In other words, classify it in a class from a set of predefined categories. Localization : Find where the object is and draw a bounding box around it Object detection: Classify and detect all objects in the image. Assign a class to each object and draw a bounding box around it. Semantic Segmentation: Classify every pixel in the image to a class according to its context, so that each pixel is assigned to an object Instance Segmentation: Classify every pixel in the image to a class so that each pixel is assigned to a different instance of an object Remember, though, that these terms are not clearly defined in the scientific community, so you may encounter one of them in a different meaning. In my understanding, these are the correct interpretations. As we get the basic terms straight, it is time to do some localization and object detection. How do we do it? Well there have been many approaches over the years, but since the arriving of Deep Learning, Convolutional Neural Networks became the industry standard. Remember our goal is to classify the object and localize it. But are we sure that there is only one object? Is it possible that there are two or three or fifteen objects? In fact, most of the time it is. That’s why we can split our problem into two different problems. In the first case , we know the number of objects (we will refer to the problem as classification + localization) and in the second we don’t (object detection). I will start with the first one as it is the most straightforward. Stanford University School of Engineering Classification + Localization If we have only one object or we know the number of objects, it is actually trivial. We can use one convolutional neural network and train it not only to classify the image but also to output 4 coordinates for the bounding box. In that way we treat the localization as a simple regression problem. For example, we can borrow a well-studied model such as ResNet or Alexnet which consists of a bunch of convolutional, pooling and other layers, and repurpose the fully connected layer to produce the bounding box apart from the category. It is so simple that make us question whether or not it will give results. And it actually works pretty well in practice. Of course, you can get fancy with it and modify the architecture for serving specific problems or enhance its accuracy, but the main idea remains. Be sure to note that in order to use this model, we should have a training set with images annotated for the class and the bounding box. And it is not the most fun to do such annotations. But what if we do no know the number of objects a priori? Then we need to get into the rabbit’s hole and talk about some hardcore stuff. Are you ready? Do you want to take a break before? Sure, I understand but I warn you not to leave. This is where the fun begins. Object Detection I am kidding. There is nothing hardcore about the architectures which will be discuss. All there is, are some clever ideas to make the system intolerant to the number of outputs and to reduce its computation cost. So, we do not know the exact number of objects in our image and we want to classify all of them and draw a bounding ox around them. That means that the number of coordinates that the model should output is not constant. If the image has 2 objects , we need 8 coordinates . If it has 4 objects, we want 16. So how we build such a model? One key idea to traditional computer vision is regions proposal. We generate a set of windows that are likely to contain an object using classic CV algorithms, like edge and shape detection and we apply only these windows( or regions of interests) to the CNN. To learn more about how regions are proposed, make sure to check here. This is the basis on a fundamental paper , which introduced a new architecture called RCNN. R-CNN Given an image with multiple objects , we generate some regions of interests using a proposal method( in RCNN’s case this method is called selective search) and warp the regions into a fixed size. We forward each region to Convolutional Neural Network (such as AlexNet), which will use an SVM to make a classification decision for each one and predicts a regression for each bounding box. This prediction comes as a correction of the region proposed, which may be in the right position but not at the exact size and orientation. Although the model produces good results, it suffers from a main issue. It is quite slow and computational expensive. Imagine that in an average case, we produce 2000 regions, which we need to store in disk, and we forward each one of them into the CNN for multiple passes until it is trained. To fix some of these problems, an improvement of the model comes in play called ‘fast-RCNN’ Fast RCNN The idea is straightforward. Instead of passing all regions into the convolutional layer one by one, we pass the entire image once and produce a feature map. Then we take the region proposals as before ( using some external method) and sort of project them onto the feature map. Now we have the regions in the feature map instead of the original image and we can forward them in some fully connected layers to output the classification decision and the bounding box correction. Note that the projection of regions proposal is implemented using a special layer( ROI layer) ,which is essentially a type of max-pooling with a pool size dependent on the input, so that the output always has the same size. For more details on the ROI layer check this great article. Faster RCNN And we can take this a step further. Using the produced feature maps from the convolutional layer, we infer regions proposal using a Region Proposal network rather than relying on an external system. Once we have those proposal , the remaining procedure is the same as Fast-RCNN (forward to ROI layer, classify using SVM and predict the bounding box). The trick part is how to train the whole model as we have multiple tasks that need to be addressed: The region proposal network should decide for each region if it contains an object or not And it needs to produce the bounding box coordinates The entire model should classify the objects to categories And again predict the bounding box offsets If you want to learn more about the training part you should check the original paper, but to give you an overview we need to utilize a multitask loss to include all 4 tasks and back propagate this loss to the network. As the name suggests, FasterRCNN turns out to be much faster than the previous models and is the one preferred in most real-world applications. Localization and object detection is a super active and interesting area of research due to the high emergency of real world applications that require excellent performance in computer vision tasks (self-driving cars , robotics). Companies and universities come up with new ideas on how to improve the accuracy on regular basis. There is another class of models for localization and object detection, called single shot detectors, which have become very popular in the last years because they are even faster and require less computational cost in general. Sure, they are less accurate, but they are ideal for embedded systems and similar power-hungry applications. But to learn more , you have to wait for my next article…" />
+<meta property="og:description" content="Localization and Object Detection with Deep Learning (part 1) Localization and Object detection are two of the core tasks in Computer Vision , as they are applied in many real-world applications such as Autonomous vehicles and Robotics. So, if you want to work in these industries as a Computer vision specialist or you want to build a relative product , you better have a good grasp of them. But what are they? What Object detection and localization means? And why we group them as they are one thing? First things first. Let’s do a quick recap of the most used terms and their meaning to avoid misconceptions: Classification/Recognition: Given an image with an object , find out what that object is. In other words, classify it in a class from a set of predefined categories. Localization : Find where the object is and draw a bounding box around it Object detection: Classify and detect all objects in the image. Assign a class to each object and draw a bounding box around it. Semantic Segmentation: Classify every pixel in the image to a class according to its context, so that each pixel is assigned to an object Instance Segmentation: Classify every pixel in the image to a class so that each pixel is assigned to a different instance of an object Remember, though, that these terms are not clearly defined in the scientific community, so you may encounter one of them in a different meaning. In my understanding, these are the correct interpretations. As we get the basic terms straight, it is time to do some localization and object detection. How do we do it? Well there have been many approaches over the years, but since the arriving of Deep Learning, Convolutional Neural Networks became the industry standard. Remember our goal is to classify the object and localize it. But are we sure that there is only one object? Is it possible that there are two or three or fifteen objects? In fact, most of the time it is. That’s why we can split our problem into two different problems. In the first case , we know the number of objects (we will refer to the problem as classification + localization) and in the second we don’t (object detection). I will start with the first one as it is the most straightforward. Stanford University School of Engineering Classification + Localization If we have only one object or we know the number of objects, it is actually trivial. We can use one convolutional neural network and train it not only to classify the image but also to output 4 coordinates for the bounding box. In that way we treat the localization as a simple regression problem. For example, we can borrow a well-studied model such as ResNet or Alexnet which consists of a bunch of convolutional, pooling and other layers, and repurpose the fully connected layer to produce the bounding box apart from the category. It is so simple that make us question whether or not it will give results. And it actually works pretty well in practice. Of course, you can get fancy with it and modify the architecture for serving specific problems or enhance its accuracy, but the main idea remains. Be sure to note that in order to use this model, we should have a training set with images annotated for the class and the bounding box. And it is not the most fun to do such annotations. But what if we do no know the number of objects a priori? Then we need to get into the rabbit’s hole and talk about some hardcore stuff. Are you ready? Do you want to take a break before? Sure, I understand but I warn you not to leave. This is where the fun begins. Object Detection I am kidding. There is nothing hardcore about the architectures which will be discuss. All there is, are some clever ideas to make the system intolerant to the number of outputs and to reduce its computation cost. So, we do not know the exact number of objects in our image and we want to classify all of them and draw a bounding ox around them. That means that the number of coordinates that the model should output is not constant. If the image has 2 objects , we need 8 coordinates . If it has 4 objects, we want 16. So how we build such a model? One key idea to traditional computer vision is regions proposal. We generate a set of windows that are likely to contain an object using classic CV algorithms, like edge and shape detection and we apply only these windows( or regions of interests) to the CNN. To learn more about how regions are proposed, make sure to check here. This is the basis on a fundamental paper , which introduced a new architecture called RCNN. R-CNN Given an image with multiple objects , we generate some regions of interests using a proposal method( in RCNN’s case this method is called selective search) and warp the regions into a fixed size. We forward each region to Convolutional Neural Network (such as AlexNet), which will use an SVM to make a classification decision for each one and predicts a regression for each bounding box. This prediction comes as a correction of the region proposed, which may be in the right position but not at the exact size and orientation. Although the model produces good results, it suffers from a main issue. It is quite slow and computational expensive. Imagine that in an average case, we produce 2000 regions, which we need to store in disk, and we forward each one of them into the CNN for multiple passes until it is trained. To fix some of these problems, an improvement of the model comes in play called ‘fast-RCNN’ Fast RCNN The idea is straightforward. Instead of passing all regions into the convolutional layer one by one, we pass the entire image once and produce a feature map. Then we take the region proposals as before ( using some external method) and sort of project them onto the feature map. Now we have the regions in the feature map instead of the original image and we can forward them in some fully connected layers to output the classification decision and the bounding box correction. Note that the projection of regions proposal is implemented using a special layer( ROI layer) ,which is essentially a type of max-pooling with a pool size dependent on the input, so that the output always has the same size. For more details on the ROI layer check this great article. Faster RCNN And we can take this a step further. Using the produced feature maps from the convolutional layer, we infer regions proposal using a Region Proposal network rather than relying on an external system. Once we have those proposal , the remaining procedure is the same as Fast-RCNN (forward to ROI layer, classify using SVM and predict the bounding box). The trick part is how to train the whole model as we have multiple tasks that need to be addressed: The region proposal network should decide for each region if it contains an object or not And it needs to produce the bounding box coordinates The entire model should classify the objects to categories And again predict the bounding box offsets If you want to learn more about the training part you should check the original paper, but to give you an overview we need to utilize a multitask loss to include all 4 tasks and back propagate this loss to the network. As the name suggests, FasterRCNN turns out to be much faster than the previous models and is the one preferred in most real-world applications. Localization and object detection is a super active and interesting area of research due to the high emergency of real world applications that require excellent performance in computer vision tasks (self-driving cars , robotics). Companies and universities come up with new ideas on how to improve the accuracy on regular basis. There is another class of models for localization and object detection, called single shot detectors, which have become very popular in the last years because they are even faster and require less computational cost in general. Sure, they are less accurate, but they are ideal for embedded systems and similar power-hungry applications. But to learn more , you have to wait for my next article…" />
+<link rel="canonical" href="//localization_and_object_detection/" />
+<meta property="og:url" content="//localization_and_object_detection/" />
+<meta property="og:site_name" content="Sergios Karagiannakos" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-03-25T00:00:00+02:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","url":"//localization_and_object_detection/","headline":"Localization and Object Detection with Deep Learning","dateModified":"2019-03-25T00:00:00+02:00","datePublished":"2019-03-25T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"//localization_and_object_detection/"},"author":{"@type":"Person","name":"Sergios Karagiannakos"},"description":"Localization and Object Detection with Deep Learning (part 1) Localization and Object detection are two of the core tasks in Computer Vision , as they are applied in many real-world applications such as Autonomous vehicles and Robotics. So, if you want to work in these industries as a Computer vision specialist or you want to build a relative product , you better have a good grasp of them. But what are they? What Object detection and localization means? And why we group them as they are one thing? First things first. Let’s do a quick recap of the most used terms and their meaning to avoid misconceptions: Classification/Recognition: Given an image with an object , find out what that object is. In other words, classify it in a class from a set of predefined categories. Localization : Find where the object is and draw a bounding box around it Object detection: Classify and detect all objects in the image. Assign a class to each object and draw a bounding box around it. Semantic Segmentation: Classify every pixel in the image to a class according to its context, so that each pixel is assigned to an object Instance Segmentation: Classify every pixel in the image to a class so that each pixel is assigned to a different instance of an object Remember, though, that these terms are not clearly defined in the scientific community, so you may encounter one of them in a different meaning. In my understanding, these are the correct interpretations. As we get the basic terms straight, it is time to do some localization and object detection. How do we do it? Well there have been many approaches over the years, but since the arriving of Deep Learning, Convolutional Neural Networks became the industry standard. Remember our goal is to classify the object and localize it. But are we sure that there is only one object? Is it possible that there are two or three or fifteen objects? In fact, most of the time it is. That’s why we can split our problem into two different problems. In the first case , we know the number of objects (we will refer to the problem as classification + localization) and in the second we don’t (object detection). I will start with the first one as it is the most straightforward. Stanford University School of Engineering Classification + Localization If we have only one object or we know the number of objects, it is actually trivial. We can use one convolutional neural network and train it not only to classify the image but also to output 4 coordinates for the bounding box. In that way we treat the localization as a simple regression problem. For example, we can borrow a well-studied model such as ResNet or Alexnet which consists of a bunch of convolutional, pooling and other layers, and repurpose the fully connected layer to produce the bounding box apart from the category. It is so simple that make us question whether or not it will give results. And it actually works pretty well in practice. Of course, you can get fancy with it and modify the architecture for serving specific problems or enhance its accuracy, but the main idea remains. Be sure to note that in order to use this model, we should have a training set with images annotated for the class and the bounding box. And it is not the most fun to do such annotations. But what if we do no know the number of objects a priori? Then we need to get into the rabbit’s hole and talk about some hardcore stuff. Are you ready? Do you want to take a break before? Sure, I understand but I warn you not to leave. This is where the fun begins. Object Detection I am kidding. There is nothing hardcore about the architectures which will be discuss. All there is, are some clever ideas to make the system intolerant to the number of outputs and to reduce its computation cost. So, we do not know the exact number of objects in our image and we want to classify all of them and draw a bounding ox around them. That means that the number of coordinates that the model should output is not constant. If the image has 2 objects , we need 8 coordinates . If it has 4 objects, we want 16. So how we build such a model? One key idea to traditional computer vision is regions proposal. We generate a set of windows that are likely to contain an object using classic CV algorithms, like edge and shape detection and we apply only these windows( or regions of interests) to the CNN. To learn more about how regions are proposed, make sure to check here. This is the basis on a fundamental paper , which introduced a new architecture called RCNN. R-CNN Given an image with multiple objects , we generate some regions of interests using a proposal method( in RCNN’s case this method is called selective search) and warp the regions into a fixed size. We forward each region to Convolutional Neural Network (such as AlexNet), which will use an SVM to make a classification decision for each one and predicts a regression for each bounding box. This prediction comes as a correction of the region proposed, which may be in the right position but not at the exact size and orientation. Although the model produces good results, it suffers from a main issue. It is quite slow and computational expensive. Imagine that in an average case, we produce 2000 regions, which we need to store in disk, and we forward each one of them into the CNN for multiple passes until it is trained. To fix some of these problems, an improvement of the model comes in play called ‘fast-RCNN’ Fast RCNN The idea is straightforward. Instead of passing all regions into the convolutional layer one by one, we pass the entire image once and produce a feature map. Then we take the region proposals as before ( using some external method) and sort of project them onto the feature map. Now we have the regions in the feature map instead of the original image and we can forward them in some fully connected layers to output the classification decision and the bounding box correction. Note that the projection of regions proposal is implemented using a special layer( ROI layer) ,which is essentially a type of max-pooling with a pool size dependent on the input, so that the output always has the same size. For more details on the ROI layer check this great article. Faster RCNN And we can take this a step further. Using the produced feature maps from the convolutional layer, we infer regions proposal using a Region Proposal network rather than relying on an external system. Once we have those proposal , the remaining procedure is the same as Fast-RCNN (forward to ROI layer, classify using SVM and predict the bounding box). The trick part is how to train the whole model as we have multiple tasks that need to be addressed: The region proposal network should decide for each region if it contains an object or not And it needs to produce the bounding box coordinates The entire model should classify the objects to categories And again predict the bounding box offsets If you want to learn more about the training part you should check the original paper, but to give you an overview we need to utilize a multitask loss to include all 4 tasks and back propagate this loss to the network. As the name suggests, FasterRCNN turns out to be much faster than the previous models and is the one preferred in most real-world applications. Localization and object detection is a super active and interesting area of research due to the high emergency of real world applications that require excellent performance in computer vision tasks (self-driving cars , robotics). Companies and universities come up with new ideas on how to improve the accuracy on regular basis. There is another class of models for localization and object detection, called single shot detectors, which have become very popular in the last years because they are even faster and require less computational cost in general. Sure, they are less accurate, but they are ideal for embedded systems and similar power-hungry applications. But to learn more , you have to wait for my next article…","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png">
+  <link rel="manifest" href="/assets/img/icons/site.webmanifest">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico">
+  <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
+  <meta name="application-name" content="Sergios Karagiannakos">
+  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
+  <!-- <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77"> -->
+  <meta name="theme-color" content="#ffffff">
+
+  
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-WMXQPRS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-WMXQPRS');
+</script>
+
+
+  
+
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+</head>
+
+
+  <body class="site">
+
+    
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMXQPRS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    <!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="/"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" itemprop="url">
+                  <span itemprop="name">Home</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about" itemprop="url">
+                  <span itemprop="name">About</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/portfolio" itemprop="url">
+                  <span itemprop="name">Portfolio</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/blog" itemprop="url">
+                  <span itemprop="name">Blog</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/contact" itemprop="url">
+                  <span itemprop="name">Contact</span>
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->
+
+    
+
+  <div class="hero" style="background-image: url( //assets/img/posts/regions_proposals.jpg">
+  
+    <div class="hero__wrap">
+      
+      <h2 class="hero__title">Localization and Object Detection with Deep Learning</h2>
+      <p class="hero__meta">
+        
+        
+                
+        
+        <span class="far fa-clock"> &nbsp Mar 25, 2019</span>
+        <span>&nbsp &nbsp</span>
+        <span class="far fa-calendar">  &nbsp 
+            8 mins
+         read</span>
+      </p>
+    </div>
+  </div>
+
+  
+
+
+        
+    <div class="container">
+        <article class="post-content" itemprop="articleBody">
+
+        <h1 id="localization-and-object-detection-with-deep-learning-part-1">Localization and Object Detection with Deep Learning (part 1)</h1>
+
+<p>Localization and Object detection are two of the core tasks in Computer Vision ,
+as they are applied in many real-world applications such as Autonomous vehicles
+and Robotics. So, if you want to work in these industries as a Computer vision
+specialist or you want to build a relative product , you better have a good
+grasp of them. But what are they? What Object detection and localization means?
+And why we group them as they are one thing?</p>
+
+<p>First things first. Let’s do a quick recap of the most used terms and their
+meaning to avoid misconceptions:</p>
+
+<ul>
+  <li>
+    <p><strong>Classification/Recognition</strong>: Given an image with an object , find out
+what that object is. In other words, classify it in a class from a set of
+predefined categories.</p>
+  </li>
+  <li>
+    <p><strong>Localization</strong> : Find where the object is and draw a bounding box around
+it</p>
+  </li>
+  <li>
+    <p><strong>Object detection</strong>: Classify and detect all objects in the image. Assign a
+class to each object and draw a bounding box around it.</p>
+  </li>
+  <li>
+    <p><strong>Semantic Segmentation</strong>: Classify every pixel in the image to a class
+according to its context, so that each pixel is assigned to an object</p>
+  </li>
+  <li>
+    <p><strong>Instance Segmentation</strong>: Classify every pixel in the image to a class so
+that each pixel is assigned to a different instance of an object</p>
+  </li>
+</ul>
+
+<p>Remember, though, that these terms are not clearly defined in the scientific
+community, so you may encounter one of them in a different meaning. In my
+understanding, these are the correct interpretations.</p>
+
+<p>As we get the basic terms straight, it is time to do some localization and
+object detection. How do we do it? Well there have been many approaches over the
+years, but since the arriving of Deep Learning, Convolutional Neural Networks
+became the industry standard. Remember <strong>our goal is to classify the object and
+localize it</strong>. But are we sure that there is only one object? Is it possible
+that there are two or three or fifteen objects? In fact, most of the time it is.</p>
+
+<p>That’s why we can split our problem into two different problems. In the first
+case , we know the number of objects (we will refer to the problem as
+classification + localization) and in the second we don’t (object detection). I
+will start with the first one as it is the most straightforward.</p>
+
+<p><img src="//assets/img/posts/cv_tasks.jpg" alt="cv_tasks" /></p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p><a href="https://www.youtube.com/channel/UCdKG2JnvPu6mY1NDXYFfN0g">Stanford University School of Engineering</a></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<h2 id="classification--localization">Classification + Localization</h2>
+
+<p>If we have only one object or we know the number of objects, it is actually
+trivial. We can use one convolutional neural network and train it <strong>not only to
+classify the image but also to output 4 coordinates for the bounding box</strong>. <strong>In
+that way we treat the localization as a simple regression problem</strong>.</p>
+
+<p>For example, we can borrow a well-studied model such as ResNet or Alexnet which
+consists of a bunch of convolutional, pooling and other layers, and repurpose
+the fully connected layer to produce the bounding box apart from the category.
+It is so simple that make us question whether or not it will give results. And
+it actually works pretty well in practice. Of course, you can get fancy with it
+and modify the architecture for serving specific problems or enhance its
+accuracy, but the main idea remains.</p>
+
+<p>Be sure to note that in order to use this model, we should have a training set
+with images annotated for the class and the bounding box. And it is not the most
+fun to do such annotations.</p>
+
+<p>But what if we do no know the number of objects a priori? Then we need to get
+into the rabbit’s hole and talk about some hardcore stuff. Are you ready? Do you
+want to take a break before? Sure, I understand but I warn you not to leave.
+This is where the fun begins.</p>
+
+<h2 id="object-detection">Object Detection</h2>
+
+<p>I am kidding. There is nothing hardcore about the architectures which will be
+discuss. All there is, are some clever ideas to make the system intolerant to
+the number of outputs and to reduce its computation cost. So, we do not know the
+exact number of objects in our image and we want to classify all of them and
+draw a bounding ox around them. That means that the number of coordinates that
+the model should output is not constant. If the image has 2 objects , we need 8
+coordinates . If it has 4 objects, we want 16. So how we build such a model?</p>
+
+<p>One key idea to traditional computer vision is regions proposal. We generate a
+set of windows that are likely to contain an object using classic CV algorithms,
+like edge and shape detection and we apply only these windows( or regions of
+interests) to the CNN. To learn more about how regions are proposed, make sure to check 
+<a href="https://www.learnopencv.com/selective-search-for-object-detection-cpp-python/">here</a>.</p>
+
+<p>This is the basis on a fundamental
+<a href="https://arxiv.org/abs/1311.2524">paper</a> , which introduced a new architecture
+called RCNN.</p>
+
+<p><img src="//assets/img/posts/regions_proposals.jpg" alt="regions_proposals" /></p>
+
+<h3 id="r-cnn">R-CNN</h3>
+
+<p>Given an image with multiple objects , we generate some regions of interests
+using a proposal method( in RCNN’s case this method is called selective search)
+and warp the regions into a fixed size. We forward each region to Convolutional
+Neural Network (such as AlexNet), which will use an SVM to make a classification
+decision for each one and predicts a regression for each bounding box. This
+prediction comes as a correction of the region proposed, which may be in the
+right position but not at the exact size and orientation.</p>
+
+<p><img src="//assets/img/posts/rcnn.jpg" alt="rcnn" /></p>
+
+<p>Although the model produces good results, it suffers from a main issue. It is
+quite slow and computational expensive. Imagine that in an average case, we
+produce 2000 regions, which we need to store in disk, and we forward each one of
+them into the CNN for multiple passes until it is trained. To fix some of these
+problems, an improvement of the model comes in play called ‘fast-RCNN’</p>
+
+<h3 id="fast-rcnn">Fast RCNN</h3>
+
+<p>The idea is straightforward. Instead of passing all regions into the
+convolutional layer one by one, we pass the entire image once and produce a
+feature map. Then we take the region proposals as before ( using some external
+method) and sort of project them onto the feature map. Now we have the regions
+in the feature map instead of the original image and we can forward them in some
+fully connected layers to output the classification decision and the bounding
+box correction.</p>
+
+<p><img src="//assets/img/posts/fastrcnn.jpg" alt="fastrcnn" /></p>
+
+<p>Note that the projection of regions proposal is implemented using a special
+layer( ROI layer) ,which is essentially a type of max-pooling with a pool size
+dependent on the input, so that the output always has the same size. For more
+details on the ROI layer check this great <a href="https://deepsense.ai/region-of-interest-pooling-explained/">article</a>.</p>
+
+<h3 id="faster-rcnn">Faster RCNN</h3>
+
+<p>And we can take this a step further. Using the produced feature maps from the
+convolutional layer, we infer regions proposal using a Region Proposal network
+rather than relying on an external system. Once we have those proposal , the
+remaining procedure is the same as Fast-RCNN (forward to ROI layer, classify
+using SVM and predict the bounding box). The trick part is how to train the
+whole model as we have multiple tasks that need to be addressed:</p>
+
+<ol>
+  <li>The region proposal network should decide for each region if it contains an
+object or not</li>
+  <li>And it needs to produce the bounding box coordinates</li>
+  <li>The entire model should classify the objects to categories</li>
+  <li>And again predict the bounding box offsets</li>
+</ol>
+
+<p>If you want to learn more about the training part you should check the original
+<a href="https://arxiv.org/abs/1506.01497">paper</a>, but to give you an overview we need
+to utilize a multitask loss to include all 4 tasks and back propagate this loss
+to the network.</p>
+
+<p><img src="//assets/img/posts/fasterrcnn.jpg" alt="fasterrcnn" /></p>
+
+<p>As the name suggests, FasterRCNN turns out to be much faster than the previous
+models and is the one preferred in most real-world applications.</p>
+
+<p>Localization and object detection is a super active and interesting area of
+research due to the high emergency of real world applications that require
+excellent performance in computer vision tasks (self-driving cars , robotics).
+Companies and universities come up with new ideas on how to improve the accuracy
+on regular basis.</p>
+
+<p>There is another class of models for localization and object detection, called
+single shot detectors, which have become very popular in the last years because
+they are even faster and require less computational cost in general. Sure, they
+are less accurate, but they are ideal for embedded systems and similar
+power-hungry applications.</p>
+
+<p>But to learn more , you have to wait for my next article…</p>
+
+
+        </article>
+        <div class="post-content controls__inner">
+        <div class="controls__item prev">
+            
+
+            <span>Previous</span>
+            <a href="/Semantic_Segmentation/">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="fillColor" d="M5.647 1.718c.37-.434.323-1.09-.106-1.465A1.016 1.016 0 0 0 4.095.36L.25 4.875a1.05 1.05 0 0 0 .017 1.378l3.95 4.407c.38.424 1.03.456 1.448.07a1.05 1.05 0 0 0 .07-1.468l-3.34-3.725 3.253-3.819z"/>
+                    </svg>
+                </span>
+            Semantic Segmentation in th...
+            </a>
+            
+        </div>
+
+        <div class="controls__item next">
+            
+            <span>Next</span>
+            <a href="/YOLO/">
+            YOLO - You only look once
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="#fillColor" d="M.353 9.282c-.37.434-.323 1.09.106 1.465a1.016 1.016 0 0 0 1.446-.107L5.75 6.125a1.05 1.05 0 0 0-.017-1.378L1.784.34A1.015 1.015 0 0 0 .336.27a1.05 1.05 0 0 0-.07 1.468l3.34 3.725L.353 9.282z"/>
+                </svg>
+                </span>
+            </a>
+            
+        </div>
+        </div>
+    </div>
+
+
+  
+
+
+    
+
+<section class="paralax-mf footer-paralax bg-image " >
+<footer class="site-footer">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-md-12 text-center">
+        <p>
+          <a href="https://www.linkedin.com/in/sergios-karagiannakos " class="social-item"><span class="fab fa-linkedin"></span></a>
+          <a href="https://www.instagram.com/sergios_krg" class="social-item"><span class="fab fa-instagram"></span></a>
+          <a href="https://www.twitter.com/karsergios" class="social-item"><span class="fab fa-twitter"></span></a>
+          <a href="https://www.facebook.com/sergios.karagiannakos" class="social-item"><span class="fab fa-facebook"></span></a>
+          <a href="https://github.com/SergiosKar" class="social-item"><span class="fab fa-github"></span></a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+        <p class="col-12 text-center footer_text">
+        <span>&copy; 2019 Sergios Karagiannakos. All rights reserved.</span>
+        </p>
+    </div>
+  </div>
+</footer>
+</section>
+<!-- JS -->
+ <!-- JavaScript Libraries -->
+ <script src="//lib/jquery/jquery.min.js"></script>
+ <script src="//lib/jquery/jquery-migrate.min.js"></script>
+ <script src="//lib/popper/popper.min.js"></script>
+ <script src="//lib/bootstrap/js/bootstrap.min.js"></script>
+ <script src="//lib/easing/easing.min.js"></script>
+ <script src="//lib/counterup/jquery.waypoints.min.js"></script>
+ <script src="//lib/counterup/jquery.counterup.js"></script>
+ <script src="//lib/lightbox/js/lightbox.min.js"></script>
+ <script src="//lib/typed/typed.min.js"></script>
+ <script src="//js/scripts.js"></script>
+ <script src="//js/contact_form.js"></script>
+
+
+
+  </body>
+
+</html>
+
+
+

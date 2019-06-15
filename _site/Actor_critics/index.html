@@ -1,0 +1,405 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>The idea behind Actor-Critics and how A2C and A3C improve them | Sergios Karagiannakos</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="The idea behind Actor-Critics and how A2C and A3C improve them" />
+<meta name="author" content="Sergios Karagiannakos" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="The idea behind Actor-Critics and how A2C and A3C improve them It’s time for some Reinforcement Learning. This time our main topic is Actor-Critic algorithms, which are the base behind almost every modern RL method from Proximal Policy Optimization to A3C. So, to understand all those new techniques, you should have a good grasp of what Actor-Critic are and how they work. But don’t be in a hurry. Let’s refresh for a moment on our previous knowledge. As you may know, there are two main types of RL methods out there: Value Based: They try to find or approximate the optimal value function, which is a mapping between an action and a value. The higher the value, the better the action. The most famous algorithm is Q learning and all its enhancements like Deep Q Networks, Double Dueling Q Networks, etc Policy-Based: Policy-Based algorithms like Policy Gradients and REINFORCE try to find the optimal policy directly without the Q -value as a middleman. Each method has their advantages. For example, policy-based are better for continuous and stochastic environments, have a faster convergence, while Value based are more sample efficient and steady. Check my previous posts on Reinforcement learning for more details. When those two algorithmic families established in the scientific communities, the next obvious step is… to try to merge them. And this is how the Actor-Critic was born. Actor-Critics aim to take advantage of all the good stuff from both value-based and policy-based while eliminating all their drawbacks. And how do they do this? The principal idea is to split the model in two: one for computing an action based on a state and another one to produce the Q values of the action. The actor takes as input the state and outputs the best action. It essentially controls how the agent behaves by learning the optimal policy (policy-based). The critic, on the other hand, evaluates the action by computing the value function (value based). Those two models participate in a game where they both get better in their own role as the time passes. The result is that the overall architecture will learn to play the game more efficiently than the two methods separately. This idea of having two models interact (or compete) with each other is getting more and more popular in the field of machine learning in the last years. Think of Generative Adversarial Networks or Variational Autoencoders for example. But let’s get back to Reinforcement Learning. A good analogy of the actor-critic is a young boy with his mother. The child (actor) constantly tries new things and exploring the environment around him. He eats its own toys, he touches the hot oven, he bangs his head in the wall (I mean why not). His mother (the critic) watches him and either criticize or compliment him. The child listen to what his mother told him and adjust his behavior. As the kid grows, he learns what actions are bad or good and he essentially learns to play the game called life. That’s exactly the same way actor-critic works. The actor can be a function approximator like a neural network and its task is to produce the best action for a given state. Of course, it can be a fully connected neural network or a convolutional or anything else. The critic is another function approximator, which receives as input the environment and the action by the actor, concatenates them and output the action value (Q-value) for the given pair. Let me remind you for a sec that the Q value is essentially the maximum future reward. The training of the two networks is performed separately and it uses gradient ascent (to find the global maximum and not the minimum) to update both their weights. As time passes, the actor is learning to produce better and better actions (he is starting to learn the policy) and the critic is getting better and better at evaluating those actions. It is important to notice that the update of the weights happen at each step (TD Learning) and not at the end of the episode, opposed to policy gradients. Actor critics have proven able to learn big, complex environments and they have used in lots of famous 2d and 3d games, such as Doom, Super Mario, and others. Are you tired? Because I now start getting excited and I plan on keep going. It’s a really good opportunity to talk about two very popular improvements of Actor-critic models, A2C and A3C. Advantage Actor-Critic (A2C) What is Advantage? Q values can, in fact, be decomposed into two pieces: the state Value function V(s) and the advantage value A(s, a): Q(s, a)= V(s)+ A(s,a) =&gt; A(s,a) =Q(s,a) -V(s) =&gt; A(s,a)= r+ γV(s_hat) -V(s) Advantage function captures how better an action is compared to the others at a given state, while as we know the value function captures how good it is to be at this state.  You guess where this is going,right? Instead of having the critic to learn the Q values, we make him learn the Advantage values. That way the evaluation of an action is based not only on how good the action is, but also how much better it can be. The advantage of the advantage function (see what I did here?) is that it reduces the high variance of policy networks and stabilize the model. Asynchronous Advantage Actor-Critic (A3C) A3C’s released by DeepMind in 2016 and make a splash in the scientific community. It’s simplicity, robustness, speed and the achievement of higher scores in standard RL tasks made policy gradients and DQN obsolete. The key difference from A2C is the Asynchronous part. A3C consists of multiple independent agents(networks) with their own weights, who interact with a different copy of the environment in parallel. Thus, they can explore a bigger part of the state-action space in much less time. The agents (or workers) are trained in parallel and update periodically a global network, which holds shared parameters. The updates are not happening simultaneously and that’s where the asynchronous comes from. After each update, the agents resets their parameters to those of the global network and continue their independent exploration and training for n steps until they update themselves again. We see that the information flows not only from the agents to the global network but also between agents as each agent resets his weights by the global network, which has the information of all the other agents. Smart right? Back to A2C The main drawback of asynchrony is that some agents will be playing with an older version of the parameters. Of course, the update may not happen asynchronously but at the same time. In that case, we have an improved version of A2C with multiple agents instead of one. A2C will wait for all the agents to finish their segment and then update the global network weights and reset all the agents. But. There is always a but. Some argue that there is no need to have many agents if they are synchronous, as they essentially are not different at all. And I agree. In fact, what we do, is to create multiple versions of the environment and just two networks. The first network (usually referred to as step model) interacts with all the environments for n time steps in parallel and outputs a batch of experiences. With those experience, we train the second network (train model) and we update the step model with the new weights. And we repeat the process. If you are confused by the difference of A2C and A3C check out this Reddit post https://medium.freecodecamp.org/an-intro-to-advantage-actor-critic-methods-lets-play-sonic-the-hedgehog-86d6240171d I tried to give you an intuitive explanation behind all these techniques without using much math and code, as things would be more complicated. However, they are not difficult models to implement as they rely on the same ideas as Policy Gradients and Deep Q Networks. If you want to build your own actor-critic model that plays Doom check this. And I think that you should. Only by building the thing ourselves , we can truly understand all the aspects, tricks and benefits of the model. By the way, I take this opportunity to mention the recently open sourced library by Deepmind called trfl. It exposes several useful building blocks for implementing Reinforcement Learning agent, as they claim. I will try and come back to you for more details. The idea of combining policy and value based method is now ,in 2018, considered standard for solving reinforcement learning problems. Most modern algorithms rely on actor-critics and expand this basic idea into more sophisticated and complex techniques. Some examples are : Deep Deterministic Policy Gradients(DDPG),Proximal Policy Optimization (PPO), Trust Region Policy Optimization (TRPO). But don’t be impatient. We’ll cover them in time…" />
+<meta property="og:description" content="The idea behind Actor-Critics and how A2C and A3C improve them It’s time for some Reinforcement Learning. This time our main topic is Actor-Critic algorithms, which are the base behind almost every modern RL method from Proximal Policy Optimization to A3C. So, to understand all those new techniques, you should have a good grasp of what Actor-Critic are and how they work. But don’t be in a hurry. Let’s refresh for a moment on our previous knowledge. As you may know, there are two main types of RL methods out there: Value Based: They try to find or approximate the optimal value function, which is a mapping between an action and a value. The higher the value, the better the action. The most famous algorithm is Q learning and all its enhancements like Deep Q Networks, Double Dueling Q Networks, etc Policy-Based: Policy-Based algorithms like Policy Gradients and REINFORCE try to find the optimal policy directly without the Q -value as a middleman. Each method has their advantages. For example, policy-based are better for continuous and stochastic environments, have a faster convergence, while Value based are more sample efficient and steady. Check my previous posts on Reinforcement learning for more details. When those two algorithmic families established in the scientific communities, the next obvious step is… to try to merge them. And this is how the Actor-Critic was born. Actor-Critics aim to take advantage of all the good stuff from both value-based and policy-based while eliminating all their drawbacks. And how do they do this? The principal idea is to split the model in two: one for computing an action based on a state and another one to produce the Q values of the action. The actor takes as input the state and outputs the best action. It essentially controls how the agent behaves by learning the optimal policy (policy-based). The critic, on the other hand, evaluates the action by computing the value function (value based). Those two models participate in a game where they both get better in their own role as the time passes. The result is that the overall architecture will learn to play the game more efficiently than the two methods separately. This idea of having two models interact (or compete) with each other is getting more and more popular in the field of machine learning in the last years. Think of Generative Adversarial Networks or Variational Autoencoders for example. But let’s get back to Reinforcement Learning. A good analogy of the actor-critic is a young boy with his mother. The child (actor) constantly tries new things and exploring the environment around him. He eats its own toys, he touches the hot oven, he bangs his head in the wall (I mean why not). His mother (the critic) watches him and either criticize or compliment him. The child listen to what his mother told him and adjust his behavior. As the kid grows, he learns what actions are bad or good and he essentially learns to play the game called life. That’s exactly the same way actor-critic works. The actor can be a function approximator like a neural network and its task is to produce the best action for a given state. Of course, it can be a fully connected neural network or a convolutional or anything else. The critic is another function approximator, which receives as input the environment and the action by the actor, concatenates them and output the action value (Q-value) for the given pair. Let me remind you for a sec that the Q value is essentially the maximum future reward. The training of the two networks is performed separately and it uses gradient ascent (to find the global maximum and not the minimum) to update both their weights. As time passes, the actor is learning to produce better and better actions (he is starting to learn the policy) and the critic is getting better and better at evaluating those actions. It is important to notice that the update of the weights happen at each step (TD Learning) and not at the end of the episode, opposed to policy gradients. Actor critics have proven able to learn big, complex environments and they have used in lots of famous 2d and 3d games, such as Doom, Super Mario, and others. Are you tired? Because I now start getting excited and I plan on keep going. It’s a really good opportunity to talk about two very popular improvements of Actor-critic models, A2C and A3C. Advantage Actor-Critic (A2C) What is Advantage? Q values can, in fact, be decomposed into two pieces: the state Value function V(s) and the advantage value A(s, a): Q(s, a)= V(s)+ A(s,a) =&gt; A(s,a) =Q(s,a) -V(s) =&gt; A(s,a)= r+ γV(s_hat) -V(s) Advantage function captures how better an action is compared to the others at a given state, while as we know the value function captures how good it is to be at this state.  You guess where this is going,right? Instead of having the critic to learn the Q values, we make him learn the Advantage values. That way the evaluation of an action is based not only on how good the action is, but also how much better it can be. The advantage of the advantage function (see what I did here?) is that it reduces the high variance of policy networks and stabilize the model. Asynchronous Advantage Actor-Critic (A3C) A3C’s released by DeepMind in 2016 and make a splash in the scientific community. It’s simplicity, robustness, speed and the achievement of higher scores in standard RL tasks made policy gradients and DQN obsolete. The key difference from A2C is the Asynchronous part. A3C consists of multiple independent agents(networks) with their own weights, who interact with a different copy of the environment in parallel. Thus, they can explore a bigger part of the state-action space in much less time. The agents (or workers) are trained in parallel and update periodically a global network, which holds shared parameters. The updates are not happening simultaneously and that’s where the asynchronous comes from. After each update, the agents resets their parameters to those of the global network and continue their independent exploration and training for n steps until they update themselves again. We see that the information flows not only from the agents to the global network but also between agents as each agent resets his weights by the global network, which has the information of all the other agents. Smart right? Back to A2C The main drawback of asynchrony is that some agents will be playing with an older version of the parameters. Of course, the update may not happen asynchronously but at the same time. In that case, we have an improved version of A2C with multiple agents instead of one. A2C will wait for all the agents to finish their segment and then update the global network weights and reset all the agents. But. There is always a but. Some argue that there is no need to have many agents if they are synchronous, as they essentially are not different at all. And I agree. In fact, what we do, is to create multiple versions of the environment and just two networks. The first network (usually referred to as step model) interacts with all the environments for n time steps in parallel and outputs a batch of experiences. With those experience, we train the second network (train model) and we update the step model with the new weights. And we repeat the process. If you are confused by the difference of A2C and A3C check out this Reddit post https://medium.freecodecamp.org/an-intro-to-advantage-actor-critic-methods-lets-play-sonic-the-hedgehog-86d6240171d I tried to give you an intuitive explanation behind all these techniques without using much math and code, as things would be more complicated. However, they are not difficult models to implement as they rely on the same ideas as Policy Gradients and Deep Q Networks. If you want to build your own actor-critic model that plays Doom check this. And I think that you should. Only by building the thing ourselves , we can truly understand all the aspects, tricks and benefits of the model. By the way, I take this opportunity to mention the recently open sourced library by Deepmind called trfl. It exposes several useful building blocks for implementing Reinforcement Learning agent, as they claim. I will try and come back to you for more details. The idea of combining policy and value based method is now ,in 2018, considered standard for solving reinforcement learning problems. Most modern algorithms rely on actor-critics and expand this basic idea into more sophisticated and complex techniques. Some examples are : Deep Deterministic Policy Gradients(DDPG),Proximal Policy Optimization (PPO), Trust Region Policy Optimization (TRPO). But don’t be impatient. We’ll cover them in time…" />
+<link rel="canonical" href="//actor_critics/" />
+<meta property="og:url" content="//actor_critics/" />
+<meta property="og:site_name" content="Sergios Karagiannakos" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-11-17T00:00:00+02:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","url":"//actor_critics/","headline":"The idea behind Actor-Critics and how A2C and A3C improve them","dateModified":"2018-11-17T00:00:00+02:00","datePublished":"2018-11-17T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"//actor_critics/"},"author":{"@type":"Person","name":"Sergios Karagiannakos"},"description":"The idea behind Actor-Critics and how A2C and A3C improve them It’s time for some Reinforcement Learning. This time our main topic is Actor-Critic algorithms, which are the base behind almost every modern RL method from Proximal Policy Optimization to A3C. So, to understand all those new techniques, you should have a good grasp of what Actor-Critic are and how they work. But don’t be in a hurry. Let’s refresh for a moment on our previous knowledge. As you may know, there are two main types of RL methods out there: Value Based: They try to find or approximate the optimal value function, which is a mapping between an action and a value. The higher the value, the better the action. The most famous algorithm is Q learning and all its enhancements like Deep Q Networks, Double Dueling Q Networks, etc Policy-Based: Policy-Based algorithms like Policy Gradients and REINFORCE try to find the optimal policy directly without the Q -value as a middleman. Each method has their advantages. For example, policy-based are better for continuous and stochastic environments, have a faster convergence, while Value based are more sample efficient and steady. Check my previous posts on Reinforcement learning for more details. When those two algorithmic families established in the scientific communities, the next obvious step is… to try to merge them. And this is how the Actor-Critic was born. Actor-Critics aim to take advantage of all the good stuff from both value-based and policy-based while eliminating all their drawbacks. And how do they do this? The principal idea is to split the model in two: one for computing an action based on a state and another one to produce the Q values of the action. The actor takes as input the state and outputs the best action. It essentially controls how the agent behaves by learning the optimal policy (policy-based). The critic, on the other hand, evaluates the action by computing the value function (value based). Those two models participate in a game where they both get better in their own role as the time passes. The result is that the overall architecture will learn to play the game more efficiently than the two methods separately. This idea of having two models interact (or compete) with each other is getting more and more popular in the field of machine learning in the last years. Think of Generative Adversarial Networks or Variational Autoencoders for example. But let’s get back to Reinforcement Learning. A good analogy of the actor-critic is a young boy with his mother. The child (actor) constantly tries new things and exploring the environment around him. He eats its own toys, he touches the hot oven, he bangs his head in the wall (I mean why not). His mother (the critic) watches him and either criticize or compliment him. The child listen to what his mother told him and adjust his behavior. As the kid grows, he learns what actions are bad or good and he essentially learns to play the game called life. That’s exactly the same way actor-critic works. The actor can be a function approximator like a neural network and its task is to produce the best action for a given state. Of course, it can be a fully connected neural network or a convolutional or anything else. The critic is another function approximator, which receives as input the environment and the action by the actor, concatenates them and output the action value (Q-value) for the given pair. Let me remind you for a sec that the Q value is essentially the maximum future reward. The training of the two networks is performed separately and it uses gradient ascent (to find the global maximum and not the minimum) to update both their weights. As time passes, the actor is learning to produce better and better actions (he is starting to learn the policy) and the critic is getting better and better at evaluating those actions. It is important to notice that the update of the weights happen at each step (TD Learning) and not at the end of the episode, opposed to policy gradients. Actor critics have proven able to learn big, complex environments and they have used in lots of famous 2d and 3d games, such as Doom, Super Mario, and others. Are you tired? Because I now start getting excited and I plan on keep going. It’s a really good opportunity to talk about two very popular improvements of Actor-critic models, A2C and A3C. Advantage Actor-Critic (A2C) What is Advantage? Q values can, in fact, be decomposed into two pieces: the state Value function V(s) and the advantage value A(s, a): Q(s, a)= V(s)+ A(s,a) =&gt; A(s,a) =Q(s,a) -V(s) =&gt; A(s,a)= r+ γV(s_hat) -V(s) Advantage function captures how better an action is compared to the others at a given state, while as we know the value function captures how good it is to be at this state.  You guess where this is going,right? Instead of having the critic to learn the Q values, we make him learn the Advantage values. That way the evaluation of an action is based not only on how good the action is, but also how much better it can be. The advantage of the advantage function (see what I did here?) is that it reduces the high variance of policy networks and stabilize the model. Asynchronous Advantage Actor-Critic (A3C) A3C’s released by DeepMind in 2016 and make a splash in the scientific community. It’s simplicity, robustness, speed and the achievement of higher scores in standard RL tasks made policy gradients and DQN obsolete. The key difference from A2C is the Asynchronous part. A3C consists of multiple independent agents(networks) with their own weights, who interact with a different copy of the environment in parallel. Thus, they can explore a bigger part of the state-action space in much less time. The agents (or workers) are trained in parallel and update periodically a global network, which holds shared parameters. The updates are not happening simultaneously and that’s where the asynchronous comes from. After each update, the agents resets their parameters to those of the global network and continue their independent exploration and training for n steps until they update themselves again. We see that the information flows not only from the agents to the global network but also between agents as each agent resets his weights by the global network, which has the information of all the other agents. Smart right? Back to A2C The main drawback of asynchrony is that some agents will be playing with an older version of the parameters. Of course, the update may not happen asynchronously but at the same time. In that case, we have an improved version of A2C with multiple agents instead of one. A2C will wait for all the agents to finish their segment and then update the global network weights and reset all the agents. But. There is always a but. Some argue that there is no need to have many agents if they are synchronous, as they essentially are not different at all. And I agree. In fact, what we do, is to create multiple versions of the environment and just two networks. The first network (usually referred to as step model) interacts with all the environments for n time steps in parallel and outputs a batch of experiences. With those experience, we train the second network (train model) and we update the step model with the new weights. And we repeat the process. If you are confused by the difference of A2C and A3C check out this Reddit post https://medium.freecodecamp.org/an-intro-to-advantage-actor-critic-methods-lets-play-sonic-the-hedgehog-86d6240171d I tried to give you an intuitive explanation behind all these techniques without using much math and code, as things would be more complicated. However, they are not difficult models to implement as they rely on the same ideas as Policy Gradients and Deep Q Networks. If you want to build your own actor-critic model that plays Doom check this. And I think that you should. Only by building the thing ourselves , we can truly understand all the aspects, tricks and benefits of the model. By the way, I take this opportunity to mention the recently open sourced library by Deepmind called trfl. It exposes several useful building blocks for implementing Reinforcement Learning agent, as they claim. I will try and come back to you for more details. The idea of combining policy and value based method is now ,in 2018, considered standard for solving reinforcement learning problems. Most modern algorithms rely on actor-critics and expand this basic idea into more sophisticated and complex techniques. Some examples are : Deep Deterministic Policy Gradients(DDPG),Proximal Policy Optimization (PPO), Trust Region Policy Optimization (TRPO). But don’t be impatient. We’ll cover them in time…","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png">
+  <link rel="manifest" href="/assets/img/icons/site.webmanifest">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico">
+  <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
+  <meta name="application-name" content="Sergios Karagiannakos">
+  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
+  <!-- <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77"> -->
+  <meta name="theme-color" content="#ffffff">
+
+  
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-WMXQPRS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-WMXQPRS');
+</script>
+
+
+  
+
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+</head>
+
+
+  <body class="site">
+
+    
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMXQPRS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    <!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="/"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" itemprop="url">
+                  <span itemprop="name">Home</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about" itemprop="url">
+                  <span itemprop="name">About</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/portfolio" itemprop="url">
+                  <span itemprop="name">Portfolio</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/blog" itemprop="url">
+                  <span itemprop="name">Blog</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/contact" itemprop="url">
+                  <span itemprop="name">Contact</span>
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->
+
+    
+
+  <div class="hero" style="background-image: url( //assets/img/posts/a3c.jpg">
+  
+    <div class="hero__wrap">
+      
+      <h2 class="hero__title">The idea behind Actor-Critics and how A2C and A3C improve them</h2>
+      <p class="hero__meta">
+        
+        
+                
+        
+        <span class="far fa-clock"> &nbsp Nov 17, 2018</span>
+        <span>&nbsp &nbsp</span>
+        <span class="far fa-calendar">  &nbsp 
+            8 mins
+         read</span>
+      </p>
+    </div>
+  </div>
+
+  
+
+
+        
+    <div class="container">
+        <article class="post-content" itemprop="articleBody">
+
+        <h1 id="the-idea-behind-actor-critics-and-how-a2c-and-a3c-improve-them">The idea behind Actor-Critics and how A2C and A3C improve them</h1>
+
+<p>It’s time for some Reinforcement Learning. This time our main topic is
+Actor-Critic algorithms, which are the base behind almost every modern RL method
+from Proximal Policy Optimization to A3C. So, to understand all those new
+techniques, you should have a good grasp of what Actor-Critic are and how they
+work.</p>
+
+<p>But don’t be in a hurry. Let’s refresh for a moment on our previous knowledge.
+As you may know, there are two main types of RL methods out there:</p>
+
+<ul>
+  <li>
+    <p>Value Based: They try to find or approximate the optimal <strong>value</strong> function,
+which is a mapping between an action and a value. The higher the value, the
+better the action. The most famous algorithm is Q learning and all its
+enhancements like Deep Q Networks, Double Dueling Q Networks, etc</p>
+  </li>
+  <li>
+    <p>Policy-Based: Policy-Based algorithms like Policy Gradients and REINFORCE
+try to find the optimal policy directly without the Q -value as a middleman.</p>
+  </li>
+</ul>
+
+<p>Each method has their advantages. For example, policy-based are better for
+continuous and stochastic environments, have a faster convergence, while Value
+based are more sample efficient and steady. Check my previous
+<a href="https://sergioskar.github.io/Reinforcement_learning/">posts</a> on Reinforcement
+learning for more details.</p>
+
+<p>When those two algorithmic families established in the scientific communities,
+the next obvious step is… to try to merge them. And this is how the Actor-Critic
+was born. Actor-Critics aim to take advantage of all the good stuff from both
+value-based and policy-based while eliminating all their drawbacks. And how do
+they do this?</p>
+
+<p>The principal idea is to split the model in two: one for computing an action
+based on a state and another one to produce the Q values of the action.</p>
+
+<p>The actor takes as input the state and outputs the best action. It essentially
+controls how the agent behaves by <strong>learning the optimal policy</strong>
+(policy-based). The critic, on the other hand, <strong>evaluates the action by
+computing the value function</strong> (value based). Those two models participate in a
+game where they both get better in their own role as the time passes. The result
+is that the overall architecture will learn to play the game more efficiently
+than the two methods separately.</p>
+
+<p><img src="//assets/img/posts/ac.jpg" alt="actor_critic" /></p>
+
+<p>This idea of having two models interact (or compete) with each other is getting
+more and more popular in the field of machine learning in the last years. Think
+of Generative Adversarial Networks or Variational Autoencoders for example.</p>
+
+<p>But let’s get back to Reinforcement Learning. A good analogy of the actor-critic
+is a young boy with his mother. The child (actor) constantly tries new things
+and exploring the environment around him. He eats its own toys, he touches the
+hot oven, he bangs his head in the wall (I mean why not). His mother (the
+critic) watches him and either criticize or compliment him. The child listen to
+what his mother told him and adjust his behavior. As the kid grows, he learns
+what actions are bad or good and he essentially learns to play the game called
+life. That’s exactly the same way actor-critic works.</p>
+
+<p>The actor can be a function approximator like a neural network and its task is
+to produce the best action for a given state. Of course, it can be a fully
+connected neural network or a convolutional or anything else. The critic is
+another function approximator, which receives as input the environment and the
+action by the actor, concatenates them and output the action value (Q-value) for
+the given pair. Let me remind you for a sec that the Q value is essentially the
+maximum future reward.</p>
+
+<p>The training of the two networks is performed separately and it uses gradient
+ascent (to find the global maximum and not the minimum) to update both their
+weights. As time passes, the actor is learning to produce better and better
+actions (he is starting to learn the policy) and the critic is getting better
+and better at evaluating those actions. It is important to notice that the
+update of the weights happen at each step (TD Learning) and not at the end of
+the episode, opposed to policy gradients.</p>
+
+<p>Actor critics have proven able to learn big, complex environments and they have
+used in lots of famous 2d and 3d games, such as Doom, Super Mario, and others.</p>
+
+<p>Are you tired? Because I now start getting excited and I plan on keep going.
+It’s a really good opportunity to talk about two very popular improvements of
+Actor-critic models, A2C and A3C.</p>
+
+<h2 id="advantage-actor-critic-a2c">Advantage Actor-Critic (A2C)</h2>
+
+<p>What is Advantage? Q values can, in fact, be decomposed into two pieces: the
+state Value function V(s) and the advantage value A(s, a):</p>
+
+<p>Q(s, a)= V(s)+ A(s,a) =&gt; A(s,a) =Q(s,a) -V(s) =&gt; A(s,a)= r+ γV(s_hat) -V(s)</p>
+
+<p>Advantage function captures how better an action is compared to the others at a
+given state, while as we know the value function captures how good it is to be
+at this state. </p>
+
+<p>You guess where this is going,right? <strong>Instead of having the critic to learn the
+Q values, we make him learn the Advantage values</strong>. That way the evaluation of
+an action is based not only on how good the action is, but also how much better
+it can be. The advantage of the advantage function (see what I did here?) is
+that it reduces the high variance of policy networks and stabilize the model.</p>
+
+<h2 id="asynchronous-advantage-actor-critic-a3c">Asynchronous Advantage Actor-Critic (A3C)</h2>
+
+<p>A3C’s released by DeepMind in 2016 and make a splash in the scientific
+community. It’s simplicity, robustness, speed and the achievement of higher
+scores in standard RL tasks made policy gradients and DQN obsolete. The key
+difference from A2C is the Asynchronous part. A3C consists of <strong>multiple
+independent agents</strong>(networks) with their own weights, who interact with a
+different copy of the environment in parallel. Thus, they can explore a bigger
+part of the state-action space in much less time.</p>
+
+<p><img src="//assets/img/posts/a3c.jpg" alt="ac3" /></p>
+
+<p>The agents (or workers) are trained in parallel and update periodically a global
+network, which holds shared parameters. The updates are not happening
+simultaneously and that’s where the asynchronous comes from. After each update,
+the agents resets their parameters to those of the global network and continue
+their independent exploration and training for n steps until they update
+themselves again.</p>
+
+<p>We see that the information flows not only from the agents to the global network
+but also between agents as each agent resets his weights by the global network,
+which has the information of all the other agents. Smart right?</p>
+
+<h2 id="back-to-a2c">Back to A2C</h2>
+
+<p>The main drawback of asynchrony is that some agents will be playing with an
+older version of the parameters. Of course, the update may not happen
+asynchronously but at the same time. In that case, we have an improved version
+of A2C with multiple agents instead of one. A2C will wait for all the agents to
+finish their segment and then update the global network weights and reset all
+the agents.</p>
+
+<p>But. There is always a but. Some argue that there is no need to have many agents
+if they are synchronous, as they essentially are not different at all. And I
+agree. In fact, what we do, is to create <strong>multiple versions of the
+environment</strong> and just two networks.</p>
+
+<p>The first network (usually referred to as step model) interacts with all the
+environments for n time steps in parallel and outputs a batch of experiences.
+With those experience, we train the second network (train model) and we update
+the step model with the new weights. And we repeat the process.</p>
+
+<p>If you are confused by the difference of A2C and A3C check out this Reddit
+<a href="https://www.reddit.com/r/reinforcementlearning/comments/7eljkx/understanding_a2c_and_a3c_multiple_actors/">post</a></p>
+
+<p><img src="//assets/img/posts/a2c.jpg" alt="a2c" /></p>
+
+<blockquote>
+  <p>https://medium.freecodecamp.org/an-intro-to-advantage-actor-critic-methods-lets-play-sonic-the-hedgehog-86d6240171d</p>
+</blockquote>
+
+<p>I tried to give you an intuitive explanation behind all these techniques without
+using much math and code, as things would be more complicated. However, they are
+not difficult models to implement as they rely on the same ideas as Policy
+Gradients and Deep Q Networks. If you want to build your own actor-critic model
+that plays Doom check <a href="http://vizdoom.cs.put.edu.pl/">this</a>. And I think that
+you should. Only by building the thing ourselves , we can truly understand all
+the aspects, tricks and benefits of the model.</p>
+
+<p>By the way, I take this opportunity to mention the recently open sourced library
+by Deepmind called <a href="https://github.com/deepmind/trfl">trfl</a>. It exposes several
+useful building blocks for implementing Reinforcement Learning agent, as they
+claim. I will try and come back to you for more details.</p>
+
+<p>The idea of combining policy and value based method is now ,in 2018, considered standard for solving reinforcement learning problems. Most modern algorithms rely on actor-critics and expand this basic idea into more sophisticated and complex techniques. Some examples are : Deep Deterministic Policy Gradients(DDPG),Proximal Policy Optimization (PPO), Trust Region Policy Optimization (TRPO).</p>
+
+<p>But don’t be impatient. We’ll cover them in time…</p>
+
+
+
+        </article>
+        <div class="post-content controls__inner">
+        <div class="controls__item prev">
+            
+
+            <span>Previous</span>
+            <a href="/Policy-Gradients/">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="fillColor" d="M5.647 1.718c.37-.434.323-1.09-.106-1.465A1.016 1.016 0 0 0 4.095.36L.25 4.875a1.05 1.05 0 0 0 .017 1.378l3.95 4.407c.38.424 1.03.456 1.448.07a1.05 1.05 0 0 0 .07-1.468l-3.34-3.725 3.253-3.819z"/>
+                    </svg>
+                </span>
+            Policy Gradients
+            </a>
+            
+        </div>
+
+        <div class="controls__item next">
+            
+            <span>Next</span>
+            <a href="/TRPO_PPO/">
+            Trust Region and Proximal p...
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="#fillColor" d="M.353 9.282c-.37.434-.323 1.09.106 1.465a1.016 1.016 0 0 0 1.446-.107L5.75 6.125a1.05 1.05 0 0 0-.017-1.378L1.784.34A1.015 1.015 0 0 0 .336.27a1.05 1.05 0 0 0-.07 1.468l3.34 3.725L.353 9.282z"/>
+                </svg>
+                </span>
+            </a>
+            
+        </div>
+        </div>
+    </div>
+
+
+  
+
+
+    
+
+<section class="paralax-mf footer-paralax bg-image " >
+<footer class="site-footer">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-md-12 text-center">
+        <p>
+          <a href="https://www.linkedin.com/in/sergios-karagiannakos " class="social-item"><span class="fab fa-linkedin"></span></a>
+          <a href="https://www.instagram.com/sergios_krg" class="social-item"><span class="fab fa-instagram"></span></a>
+          <a href="https://www.twitter.com/karsergios" class="social-item"><span class="fab fa-twitter"></span></a>
+          <a href="https://www.facebook.com/sergios.karagiannakos" class="social-item"><span class="fab fa-facebook"></span></a>
+          <a href="https://github.com/SergiosKar" class="social-item"><span class="fab fa-github"></span></a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+        <p class="col-12 text-center footer_text">
+        <span>&copy; 2019 Sergios Karagiannakos. All rights reserved.</span>
+        </p>
+    </div>
+  </div>
+</footer>
+</section>
+<!-- JS -->
+ <!-- JavaScript Libraries -->
+ <script src="//lib/jquery/jquery.min.js"></script>
+ <script src="//lib/jquery/jquery-migrate.min.js"></script>
+ <script src="//lib/popper/popper.min.js"></script>
+ <script src="//lib/bootstrap/js/bootstrap.min.js"></script>
+ <script src="//lib/easing/easing.min.js"></script>
+ <script src="//lib/counterup/jquery.waypoints.min.js"></script>
+ <script src="//lib/counterup/jquery.counterup.js"></script>
+ <script src="//lib/lightbox/js/lightbox.min.js"></script>
+ <script src="//lib/typed/typed.min.js"></script>
+ <script src="//js/scripts.js"></script>
+ <script src="//js/contact_form.js"></script>
+
+
+
+  </body>
+
+</html>
+
+
+

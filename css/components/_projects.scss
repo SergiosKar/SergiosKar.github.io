@@ -1,0 +1,95 @@
+
+    /*======================================
+  //--//-->   PROJECTS
+  ======================================*/
+  
+
+  .project{
+    width: auto;
+    height: 285px;
+    margin-bottom: 10px !important;
+    position: relative;
+    z-index: 0;
+    background-size:95% 95%;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 6px;
+    
+    
+    & {
+
+      @include media-breakpoint-down(sm){
+        height: 285px;
+      }
+      .text{
+        max-width: 45%;
+        z-index: 1;
+        h3{
+          font-size: 22px;
+          a{
+            color: $white;
+          }
+        }
+        span{
+          color: rgba(255,255,255,.8);
+          text-transform: uppercase;
+          letter-spacing: 2px;
+        }
+        @include media-breakpoint-down(sm){
+          max-width: 100%;
+          opacity: 1;
+          span{
+            color: rgba(255,255,255,.8);
+          }
+        }
+      }
+    }
+    .overlay{
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      content: '';
+      opacity: 0;
+      background: $primary;
+      z-index: -1;
+      @include transition(.3s);
+      @include media-breakpoint-down(sm){
+        opacity: .2;
+      }
+    }
+    .text{
+      max-width: 80%;
+      z-index: 1;
+      opacity: 0;
+      @include transition(.3s);
+      h3{
+        font-size: 20px;
+        a{
+          color: $white;
+        }
+      }
+      span{
+        color: rgba(255,255,255,.5);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      @include media-breakpoint-down(sm){
+        opacity: 1;
+        span{
+          color: rgba(255,255,255,.8);
+        }
+      }
+    }
+    &:hover, &:focus{
+      .overlay{
+        opacity: .9;
+      }
+      .text{
+        opacity: 1;
+      }
+    }
+  }
+  
+  

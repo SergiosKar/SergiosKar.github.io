@@ -1,0 +1,501 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Document clustering | Sergios Karagiannakos</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Document clustering" />
+<meta name="author" content="Sergios Karagiannakos" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Document clustering Lets get started… In order to classify the items based on their content, I decided to use K- means algorithm. Due to the fact the the items are un-labeled , it is clearly a unsupervised learning problem and one of the best solution should be K-Means. Of course we can use a different algorithm, such as Gaussian mixture models or even deep learning methods such as Autoencoders. I will use python with Jupyter notebook, to combine the code and the results with the documentation. I develop the code in Anaconda environment and i use the following dependencies: Pandas for data handing Sklearn for machine learning and preprocessing Matplotlib for plotting Ntlk for natural language algorithms BeautifulSoup to parse the text from xml file and get rid of the tags Parsing the Data The function parseXML uses the xml.etree.ElementTree to parse the data. I decided to use only the title and the description of the items for the clustering, which are the most relevant to semasiology. Because of the fact that the description is not raw tex , we extract the text with the BeautifulSoup library, as I already mention. Also we drop the items with a very small description , because they affect the final clustering. We can consider that they all belong to an extra cluster. Of course, there are ways to include them, but I do not use them for the moment. import xml.etree.ElementTree as ET import pandas as pd import nltk from sklearn.cluster import KMeans from sklearn.externals import joblib from sklearn.feature_extraction.text import TfidfVectorizer from sklearn.metrics.pairwise import cosine_similarity nltk.download(&#39;punkt&#39;) from bs4 import BeautifulSoup from nltk import SnowballStemmer import re def parseXML(xmlfile): tree = ET.parse(xmlfile) root = tree.getroot() titles=[] descriptions=[] for item in root.findall(&#39;./channel/item&#39;): for child in item: if(child.tag==&#39;title&#39; ): titles.append(child.text) if (child.tag == &#39;description&#39; ): soup = BeautifulSoup(str(child.text).encode(&#39;utf8&#39;,&#39;ignore&#39;), &quot;lxml&quot;) strtext=soup.text.replace(u&#39;\xa0&#39;, u&#39; &#39;).replace(&#39;\n&#39;,&#39; &#39;) descriptions.append(strtext) return titles,descriptions #remove items with short descriptions bef_titles,bef_descriptions = parseXML(&#39;data.source.rss-feeds.xml&#39;) print(&#39;Count of items before dropping:&#39; ,len(bef_titles)) titles=[] descriptions=[] for i in range(len(bef_titles)): if ( len(bef_descriptions[i]) &gt; 500): titles.append(bef_titles[i]) descriptions.append(bef_descriptions[i]) print(&#39;Count of items after:&#39; ,len(titles)) [nltk_data] Downloading package punkt to [nltk_data] C:\Users\sergi\AppData\Roaming\nltk_data... [nltk_data] Package punkt is already up-to-date! Count of items before dropping: 1662 Count of items after: 1130 Tokenizing and stemming The next step is to tokenize the text into words,remove any morphological affixes and drop common words such as articles and prepositions.This can be done with built-in functions of ntlk.I the end, we get two distinct vocabularies(one tokenized andstemmed and one only tokenized ) and we combine them to a pandas dataframe. def tokenize_and_stem(text): #tokenize tokens = [word for sent in nltk.sent_tokenize(text) for word in nltk.word_tokenize(sent)] filtered_tokens = [] #keep only letters for token in tokens: if re.search(&#39;[a-zA-Z]&#39;, token): filtered_tokens.append(token) #stemming stems = [stemmer.stem(t) for t in filtered_tokens] return stems def tokenize_only(text): tokens = [word.lower() for sent in nltk.sent_tokenize(text) for word in nltk.word_tokenize(sent)] filtered_tokens = [] for token in tokens: if re.search(&#39;[a-zA-Z]&#39;, token): filtered_tokens.append(token) return filtered_tokens # nltk&#39;s English stopwords and stemmer stemmer = SnowballStemmer(&quot;english&quot;) #create steam and tokenized voucabularies totalvocab_stemmed = [] totalvocab_tokenized = [] for i in descriptions: allwords_stemmed = tokenize_and_stem(i) totalvocab_stemmed.extend(allwords_stemmed) allwords_tokenized = tokenize_only(i) totalvocab_tokenized.extend(allwords_tokenized) vocab_frame = pd.DataFrame({&#39;words&#39;: totalvocab_tokenized}, index=totalvocab_stemmed) print(&#39;there are &#39; + str(vocab_frame.shape[0]) + &#39; items in vocab_frame&#39;) there are 481437 items in vocab_frame Vectorizing and stemming Before we load the data into the K- means algorithm , it is essential to vectorize them. The most popular technique is Tdidf Vectorizer, which create a matrix based on the frequency of words in the documents and this is the one we are going to use. Basically, it shows how important is a word to a document .It is worth to mention that, as a future work word2vec and doc2vec may be a much more efficient to represent the relationships between the items. #Tf-idf tfidf_vectorizer = TfidfVectorizer(max_df=0.8, max_features=200000,min_df=0.2, stop_words=&#39;english&#39;, use_idf=True, tokenizer=tokenize_and_stem, ngram_range=(1,3)) tfidf_matrix = tfidf_vectorizer.fit_transform(descriptions) print(&#39;Td idf Matrix shape: &#39;,tfidf_matrix.shape) terms = tfidf_vectorizer.get_feature_names() #calculate the distance matrix . I will use them in the visualization of the cluster. dist = 1 - cosine_similarity(tfidf_matrix) Td idf Matrix shape: (1130, 74) K means The actual clustering takes place here, where K means produces 5 clusters based on the Td-idf matrix. We can easily predict that this will not be the optimal solution, cause it takes into consideration only the frequency of each word in the document. num_clusters = 5 km = KMeans(n_clusters=num_clusters) km.fit(tfidf_matrix) clusters = km.labels_.tolist() To present the cluster, i create a pandas Dataframe indexed by the clusters. The top 6 words of each cluster are presented below. We notice that the clustering is far from perfect as some words are in more than one cluster. Also there isn’t a clear distinction between the semantic content of clusters. We can easily see that terms related to work includes in more that one clusters. items = { &#39;title&#39;: titles, &#39;description&#39;: descriptions} frame = pd.DataFrame(items, index = [clusters] , columns = [ &#39;title&#39;,&#39;cluster&#39;]) print(&quot;Top terms per cluster:&quot;) # sort cluster centers by proximity to centroid order_centroids = km.cluster_centers_.argsort()[:, ::-1] for i in range(num_clusters): print(&quot;Cluster %d words:&quot; % i, end=&#39;&#39;) for ind in order_centroids[i, :6]: # replace 6 with n words per cluster print(&#39; %s&#39; % vocab_frame.ix[terms[ind].split(&#39; &#39;)].values.tolist()[0][0], end=&#39;,&#39;) print() #print(&quot;Cluster %d titles:&quot; % i, end=&#39;&#39;) #for title in frame.ix[i][&#39;title&#39;].values.tolist(): #print(&#39; %s,&#39; % title, end=&#39;&#39;) Top terms per cluster: Cluster 0 words: labour, employability, european, social, work, eu, Cluster 1 words: occupational, sectors, skill, employability, services, workers, Cluster 2 words: skill, job, labour, develop, market, cedefop, Cluster 3 words: education, training, learning, vocational, education, cedefop, Cluster 4 words: rates, unemployment, area, employability, increasingly, stated, Visualization To visualize the clustering , we should first reduce their dimensionality. We achieved that with t-SNE(t-Distributed Stochastic Neighbor Embedding) from sklearn.manifold library. Another way would pe to use PCA or Multi-Demiensional Scaling(MDS). The plotting is done with matplotlib library. import os # for os.path.basename import matplotlib.pyplot as plt import matplotlib as mpl from sklearn.manifold import TSNE tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300) # dist is the distance matrix pos = tsne.fit_transform(dist) xs, ys = pos[:, 0], pos[:, 1] cluster_colors = {0: &#39;#1b9e77&#39;, 1: &#39;#d95f02&#39;, 2: &#39;#7570b3&#39;, 3: &#39;#e7298a&#39;, 4: &#39;#66a61e&#39;} cluster_names = {0: &#39;A&#39;,1: &#39;B&#39;, 2: &#39;C&#39;, 3: &#39;D&#39;, 4: &#39;E&#39;} [t-SNE] Computing pairwise distances... [t-SNE] Computing 121 nearest neighbors... [t-SNE] Computed conditional probabilities for sample 1000 / 1130 [t-SNE] Computed conditional probabilities for sample 1130 / 1130 [t-SNE] Mean sigma: 1.785805 [t-SNE] KL divergence after 100 iterations with early exaggeration: 0.947952 [t-SNE] Error after 125 iterations: 0.947952 %matplotlib inline df = pd.DataFrame(dict(x=xs, y=ys, label=clusters, title=titles)) groups = df.groupby(&#39;label&#39;) fig, ax = plt.subplots(figsize=(16,8) ) for name, group in groups: ax.plot(group.x, group.y, marker=&#39;o&#39;, linestyle=&#39;&#39;, ms=12, label=cluster_names[name], color=cluster_colors[name], mec=&#39;none&#39;) ax.legend(numpoints=1) #we do not present the tiles of items to not make the graph overwhelming #for i in range(len(df)): #ax.text(df.ix[i][&#39;x&#39;], df.ix[i][&#39;y&#39;], df.ix[i][&#39;title&#39;], size=4) plt.show() We observe that the results are not as bad as we initially thought. Although there is some partial overlapping, the groups are quite distinguished. There is no doubt, however, that we can optimize them much further. We should mention that items with a few words are not presented in the graph . I also notice that there are some items written in a differenet laguage than English. We currently not handle them and as a result their classification is in fact random. There are some of the misplaced dots in the diagramm. Moreover, there is more work to be done with the data cleaning and preprocessing. One way is to optimize the parameters of tdidf vectorization, use doc2vec for vectorization . Or we can use an another technique such Affinity Propagation,Spectral Clustering or more recent methods like HDBSCAN and Variational Autoencoders, which i would love to develop. PS: To run the code, you can do it directly from jupyter if the required dependencies are installed or you can export it as .py file and run it with an ide or directly via the console." />
+<meta property="og:description" content="Document clustering Lets get started… In order to classify the items based on their content, I decided to use K- means algorithm. Due to the fact the the items are un-labeled , it is clearly a unsupervised learning problem and one of the best solution should be K-Means. Of course we can use a different algorithm, such as Gaussian mixture models or even deep learning methods such as Autoencoders. I will use python with Jupyter notebook, to combine the code and the results with the documentation. I develop the code in Anaconda environment and i use the following dependencies: Pandas for data handing Sklearn for machine learning and preprocessing Matplotlib for plotting Ntlk for natural language algorithms BeautifulSoup to parse the text from xml file and get rid of the tags Parsing the Data The function parseXML uses the xml.etree.ElementTree to parse the data. I decided to use only the title and the description of the items for the clustering, which are the most relevant to semasiology. Because of the fact that the description is not raw tex , we extract the text with the BeautifulSoup library, as I already mention. Also we drop the items with a very small description , because they affect the final clustering. We can consider that they all belong to an extra cluster. Of course, there are ways to include them, but I do not use them for the moment. import xml.etree.ElementTree as ET import pandas as pd import nltk from sklearn.cluster import KMeans from sklearn.externals import joblib from sklearn.feature_extraction.text import TfidfVectorizer from sklearn.metrics.pairwise import cosine_similarity nltk.download(&#39;punkt&#39;) from bs4 import BeautifulSoup from nltk import SnowballStemmer import re def parseXML(xmlfile): tree = ET.parse(xmlfile) root = tree.getroot() titles=[] descriptions=[] for item in root.findall(&#39;./channel/item&#39;): for child in item: if(child.tag==&#39;title&#39; ): titles.append(child.text) if (child.tag == &#39;description&#39; ): soup = BeautifulSoup(str(child.text).encode(&#39;utf8&#39;,&#39;ignore&#39;), &quot;lxml&quot;) strtext=soup.text.replace(u&#39;\xa0&#39;, u&#39; &#39;).replace(&#39;\n&#39;,&#39; &#39;) descriptions.append(strtext) return titles,descriptions #remove items with short descriptions bef_titles,bef_descriptions = parseXML(&#39;data.source.rss-feeds.xml&#39;) print(&#39;Count of items before dropping:&#39; ,len(bef_titles)) titles=[] descriptions=[] for i in range(len(bef_titles)): if ( len(bef_descriptions[i]) &gt; 500): titles.append(bef_titles[i]) descriptions.append(bef_descriptions[i]) print(&#39;Count of items after:&#39; ,len(titles)) [nltk_data] Downloading package punkt to [nltk_data] C:\Users\sergi\AppData\Roaming\nltk_data... [nltk_data] Package punkt is already up-to-date! Count of items before dropping: 1662 Count of items after: 1130 Tokenizing and stemming The next step is to tokenize the text into words,remove any morphological affixes and drop common words such as articles and prepositions.This can be done with built-in functions of ntlk.I the end, we get two distinct vocabularies(one tokenized andstemmed and one only tokenized ) and we combine them to a pandas dataframe. def tokenize_and_stem(text): #tokenize tokens = [word for sent in nltk.sent_tokenize(text) for word in nltk.word_tokenize(sent)] filtered_tokens = [] #keep only letters for token in tokens: if re.search(&#39;[a-zA-Z]&#39;, token): filtered_tokens.append(token) #stemming stems = [stemmer.stem(t) for t in filtered_tokens] return stems def tokenize_only(text): tokens = [word.lower() for sent in nltk.sent_tokenize(text) for word in nltk.word_tokenize(sent)] filtered_tokens = [] for token in tokens: if re.search(&#39;[a-zA-Z]&#39;, token): filtered_tokens.append(token) return filtered_tokens # nltk&#39;s English stopwords and stemmer stemmer = SnowballStemmer(&quot;english&quot;) #create steam and tokenized voucabularies totalvocab_stemmed = [] totalvocab_tokenized = [] for i in descriptions: allwords_stemmed = tokenize_and_stem(i) totalvocab_stemmed.extend(allwords_stemmed) allwords_tokenized = tokenize_only(i) totalvocab_tokenized.extend(allwords_tokenized) vocab_frame = pd.DataFrame({&#39;words&#39;: totalvocab_tokenized}, index=totalvocab_stemmed) print(&#39;there are &#39; + str(vocab_frame.shape[0]) + &#39; items in vocab_frame&#39;) there are 481437 items in vocab_frame Vectorizing and stemming Before we load the data into the K- means algorithm , it is essential to vectorize them. The most popular technique is Tdidf Vectorizer, which create a matrix based on the frequency of words in the documents and this is the one we are going to use. Basically, it shows how important is a word to a document .It is worth to mention that, as a future work word2vec and doc2vec may be a much more efficient to represent the relationships between the items. #Tf-idf tfidf_vectorizer = TfidfVectorizer(max_df=0.8, max_features=200000,min_df=0.2, stop_words=&#39;english&#39;, use_idf=True, tokenizer=tokenize_and_stem, ngram_range=(1,3)) tfidf_matrix = tfidf_vectorizer.fit_transform(descriptions) print(&#39;Td idf Matrix shape: &#39;,tfidf_matrix.shape) terms = tfidf_vectorizer.get_feature_names() #calculate the distance matrix . I will use them in the visualization of the cluster. dist = 1 - cosine_similarity(tfidf_matrix) Td idf Matrix shape: (1130, 74) K means The actual clustering takes place here, where K means produces 5 clusters based on the Td-idf matrix. We can easily predict that this will not be the optimal solution, cause it takes into consideration only the frequency of each word in the document. num_clusters = 5 km = KMeans(n_clusters=num_clusters) km.fit(tfidf_matrix) clusters = km.labels_.tolist() To present the cluster, i create a pandas Dataframe indexed by the clusters. The top 6 words of each cluster are presented below. We notice that the clustering is far from perfect as some words are in more than one cluster. Also there isn’t a clear distinction between the semantic content of clusters. We can easily see that terms related to work includes in more that one clusters. items = { &#39;title&#39;: titles, &#39;description&#39;: descriptions} frame = pd.DataFrame(items, index = [clusters] , columns = [ &#39;title&#39;,&#39;cluster&#39;]) print(&quot;Top terms per cluster:&quot;) # sort cluster centers by proximity to centroid order_centroids = km.cluster_centers_.argsort()[:, ::-1] for i in range(num_clusters): print(&quot;Cluster %d words:&quot; % i, end=&#39;&#39;) for ind in order_centroids[i, :6]: # replace 6 with n words per cluster print(&#39; %s&#39; % vocab_frame.ix[terms[ind].split(&#39; &#39;)].values.tolist()[0][0], end=&#39;,&#39;) print() #print(&quot;Cluster %d titles:&quot; % i, end=&#39;&#39;) #for title in frame.ix[i][&#39;title&#39;].values.tolist(): #print(&#39; %s,&#39; % title, end=&#39;&#39;) Top terms per cluster: Cluster 0 words: labour, employability, european, social, work, eu, Cluster 1 words: occupational, sectors, skill, employability, services, workers, Cluster 2 words: skill, job, labour, develop, market, cedefop, Cluster 3 words: education, training, learning, vocational, education, cedefop, Cluster 4 words: rates, unemployment, area, employability, increasingly, stated, Visualization To visualize the clustering , we should first reduce their dimensionality. We achieved that with t-SNE(t-Distributed Stochastic Neighbor Embedding) from sklearn.manifold library. Another way would pe to use PCA or Multi-Demiensional Scaling(MDS). The plotting is done with matplotlib library. import os # for os.path.basename import matplotlib.pyplot as plt import matplotlib as mpl from sklearn.manifold import TSNE tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300) # dist is the distance matrix pos = tsne.fit_transform(dist) xs, ys = pos[:, 0], pos[:, 1] cluster_colors = {0: &#39;#1b9e77&#39;, 1: &#39;#d95f02&#39;, 2: &#39;#7570b3&#39;, 3: &#39;#e7298a&#39;, 4: &#39;#66a61e&#39;} cluster_names = {0: &#39;A&#39;,1: &#39;B&#39;, 2: &#39;C&#39;, 3: &#39;D&#39;, 4: &#39;E&#39;} [t-SNE] Computing pairwise distances... [t-SNE] Computing 121 nearest neighbors... [t-SNE] Computed conditional probabilities for sample 1000 / 1130 [t-SNE] Computed conditional probabilities for sample 1130 / 1130 [t-SNE] Mean sigma: 1.785805 [t-SNE] KL divergence after 100 iterations with early exaggeration: 0.947952 [t-SNE] Error after 125 iterations: 0.947952 %matplotlib inline df = pd.DataFrame(dict(x=xs, y=ys, label=clusters, title=titles)) groups = df.groupby(&#39;label&#39;) fig, ax = plt.subplots(figsize=(16,8) ) for name, group in groups: ax.plot(group.x, group.y, marker=&#39;o&#39;, linestyle=&#39;&#39;, ms=12, label=cluster_names[name], color=cluster_colors[name], mec=&#39;none&#39;) ax.legend(numpoints=1) #we do not present the tiles of items to not make the graph overwhelming #for i in range(len(df)): #ax.text(df.ix[i][&#39;x&#39;], df.ix[i][&#39;y&#39;], df.ix[i][&#39;title&#39;], size=4) plt.show() We observe that the results are not as bad as we initially thought. Although there is some partial overlapping, the groups are quite distinguished. There is no doubt, however, that we can optimize them much further. We should mention that items with a few words are not presented in the graph . I also notice that there are some items written in a differenet laguage than English. We currently not handle them and as a result their classification is in fact random. There are some of the misplaced dots in the diagramm. Moreover, there is more work to be done with the data cleaning and preprocessing. One way is to optimize the parameters of tdidf vectorization, use doc2vec for vectorization . Or we can use an another technique such Affinity Propagation,Spectral Clustering or more recent methods like HDBSCAN and Variational Autoencoders, which i would love to develop. PS: To run the code, you can do it directly from jupyter if the required dependencies are installed or you can export it as .py file and run it with an ide or directly via the console." />
+<link rel="canonical" href="//document_clustering/" />
+<meta property="og:url" content="//document_clustering/" />
+<meta property="og:site_name" content="Sergios Karagiannakos" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-07-14T00:00:00+03:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","url":"//document_clustering/","headline":"Document clustering","dateModified":"2018-07-14T00:00:00+03:00","datePublished":"2018-07-14T00:00:00+03:00","mainEntityOfPage":{"@type":"WebPage","@id":"//document_clustering/"},"author":{"@type":"Person","name":"Sergios Karagiannakos"},"description":"Document clustering Lets get started… In order to classify the items based on their content, I decided to use K- means algorithm. Due to the fact the the items are un-labeled , it is clearly a unsupervised learning problem and one of the best solution should be K-Means. Of course we can use a different algorithm, such as Gaussian mixture models or even deep learning methods such as Autoencoders. I will use python with Jupyter notebook, to combine the code and the results with the documentation. I develop the code in Anaconda environment and i use the following dependencies: Pandas for data handing Sklearn for machine learning and preprocessing Matplotlib for plotting Ntlk for natural language algorithms BeautifulSoup to parse the text from xml file and get rid of the tags Parsing the Data The function parseXML uses the xml.etree.ElementTree to parse the data. I decided to use only the title and the description of the items for the clustering, which are the most relevant to semasiology. Because of the fact that the description is not raw tex , we extract the text with the BeautifulSoup library, as I already mention. Also we drop the items with a very small description , because they affect the final clustering. We can consider that they all belong to an extra cluster. Of course, there are ways to include them, but I do not use them for the moment. import xml.etree.ElementTree as ET import pandas as pd import nltk from sklearn.cluster import KMeans from sklearn.externals import joblib from sklearn.feature_extraction.text import TfidfVectorizer from sklearn.metrics.pairwise import cosine_similarity nltk.download(&#39;punkt&#39;) from bs4 import BeautifulSoup from nltk import SnowballStemmer import re def parseXML(xmlfile): tree = ET.parse(xmlfile) root = tree.getroot() titles=[] descriptions=[] for item in root.findall(&#39;./channel/item&#39;): for child in item: if(child.tag==&#39;title&#39; ): titles.append(child.text) if (child.tag == &#39;description&#39; ): soup = BeautifulSoup(str(child.text).encode(&#39;utf8&#39;,&#39;ignore&#39;), &quot;lxml&quot;) strtext=soup.text.replace(u&#39;\\xa0&#39;, u&#39; &#39;).replace(&#39;\\n&#39;,&#39; &#39;) descriptions.append(strtext) return titles,descriptions #remove items with short descriptions bef_titles,bef_descriptions = parseXML(&#39;data.source.rss-feeds.xml&#39;) print(&#39;Count of items before dropping:&#39; ,len(bef_titles)) titles=[] descriptions=[] for i in range(len(bef_titles)): if ( len(bef_descriptions[i]) &gt; 500): titles.append(bef_titles[i]) descriptions.append(bef_descriptions[i]) print(&#39;Count of items after:&#39; ,len(titles)) [nltk_data] Downloading package punkt to [nltk_data] C:\\Users\\sergi\\AppData\\Roaming\\nltk_data... [nltk_data] Package punkt is already up-to-date! Count of items before dropping: 1662 Count of items after: 1130 Tokenizing and stemming The next step is to tokenize the text into words,remove any morphological affixes and drop common words such as articles and prepositions.This can be done with built-in functions of ntlk.I the end, we get two distinct vocabularies(one tokenized andstemmed and one only tokenized ) and we combine them to a pandas dataframe. def tokenize_and_stem(text): #tokenize tokens = [word for sent in nltk.sent_tokenize(text) for word in nltk.word_tokenize(sent)] filtered_tokens = [] #keep only letters for token in tokens: if re.search(&#39;[a-zA-Z]&#39;, token): filtered_tokens.append(token) #stemming stems = [stemmer.stem(t) for t in filtered_tokens] return stems def tokenize_only(text): tokens = [word.lower() for sent in nltk.sent_tokenize(text) for word in nltk.word_tokenize(sent)] filtered_tokens = [] for token in tokens: if re.search(&#39;[a-zA-Z]&#39;, token): filtered_tokens.append(token) return filtered_tokens # nltk&#39;s English stopwords and stemmer stemmer = SnowballStemmer(&quot;english&quot;) #create steam and tokenized voucabularies totalvocab_stemmed = [] totalvocab_tokenized = [] for i in descriptions: allwords_stemmed = tokenize_and_stem(i) totalvocab_stemmed.extend(allwords_stemmed) allwords_tokenized = tokenize_only(i) totalvocab_tokenized.extend(allwords_tokenized) vocab_frame = pd.DataFrame({&#39;words&#39;: totalvocab_tokenized}, index=totalvocab_stemmed) print(&#39;there are &#39; + str(vocab_frame.shape[0]) + &#39; items in vocab_frame&#39;) there are 481437 items in vocab_frame Vectorizing and stemming Before we load the data into the K- means algorithm , it is essential to vectorize them. The most popular technique is Tdidf Vectorizer, which create a matrix based on the frequency of words in the documents and this is the one we are going to use. Basically, it shows how important is a word to a document .It is worth to mention that, as a future work word2vec and doc2vec may be a much more efficient to represent the relationships between the items. #Tf-idf tfidf_vectorizer = TfidfVectorizer(max_df=0.8, max_features=200000,min_df=0.2, stop_words=&#39;english&#39;, use_idf=True, tokenizer=tokenize_and_stem, ngram_range=(1,3)) tfidf_matrix = tfidf_vectorizer.fit_transform(descriptions) print(&#39;Td idf Matrix shape: &#39;,tfidf_matrix.shape) terms = tfidf_vectorizer.get_feature_names() #calculate the distance matrix . I will use them in the visualization of the cluster. dist = 1 - cosine_similarity(tfidf_matrix) Td idf Matrix shape: (1130, 74) K means The actual clustering takes place here, where K means produces 5 clusters based on the Td-idf matrix. We can easily predict that this will not be the optimal solution, cause it takes into consideration only the frequency of each word in the document. num_clusters = 5 km = KMeans(n_clusters=num_clusters) km.fit(tfidf_matrix) clusters = km.labels_.tolist() To present the cluster, i create a pandas Dataframe indexed by the clusters. The top 6 words of each cluster are presented below. We notice that the clustering is far from perfect as some words are in more than one cluster. Also there isn’t a clear distinction between the semantic content of clusters. We can easily see that terms related to work includes in more that one clusters. items = { &#39;title&#39;: titles, &#39;description&#39;: descriptions} frame = pd.DataFrame(items, index = [clusters] , columns = [ &#39;title&#39;,&#39;cluster&#39;]) print(&quot;Top terms per cluster:&quot;) # sort cluster centers by proximity to centroid order_centroids = km.cluster_centers_.argsort()[:, ::-1] for i in range(num_clusters): print(&quot;Cluster %d words:&quot; % i, end=&#39;&#39;) for ind in order_centroids[i, :6]: # replace 6 with n words per cluster print(&#39; %s&#39; % vocab_frame.ix[terms[ind].split(&#39; &#39;)].values.tolist()[0][0], end=&#39;,&#39;) print() #print(&quot;Cluster %d titles:&quot; % i, end=&#39;&#39;) #for title in frame.ix[i][&#39;title&#39;].values.tolist(): #print(&#39; %s,&#39; % title, end=&#39;&#39;) Top terms per cluster: Cluster 0 words: labour, employability, european, social, work, eu, Cluster 1 words: occupational, sectors, skill, employability, services, workers, Cluster 2 words: skill, job, labour, develop, market, cedefop, Cluster 3 words: education, training, learning, vocational, education, cedefop, Cluster 4 words: rates, unemployment, area, employability, increasingly, stated, Visualization To visualize the clustering , we should first reduce their dimensionality. We achieved that with t-SNE(t-Distributed Stochastic Neighbor Embedding) from sklearn.manifold library. Another way would pe to use PCA or Multi-Demiensional Scaling(MDS). The plotting is done with matplotlib library. import os # for os.path.basename import matplotlib.pyplot as plt import matplotlib as mpl from sklearn.manifold import TSNE tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300) # dist is the distance matrix pos = tsne.fit_transform(dist) xs, ys = pos[:, 0], pos[:, 1] cluster_colors = {0: &#39;#1b9e77&#39;, 1: &#39;#d95f02&#39;, 2: &#39;#7570b3&#39;, 3: &#39;#e7298a&#39;, 4: &#39;#66a61e&#39;} cluster_names = {0: &#39;A&#39;,1: &#39;B&#39;, 2: &#39;C&#39;, 3: &#39;D&#39;, 4: &#39;E&#39;} [t-SNE] Computing pairwise distances... [t-SNE] Computing 121 nearest neighbors... [t-SNE] Computed conditional probabilities for sample 1000 / 1130 [t-SNE] Computed conditional probabilities for sample 1130 / 1130 [t-SNE] Mean sigma: 1.785805 [t-SNE] KL divergence after 100 iterations with early exaggeration: 0.947952 [t-SNE] Error after 125 iterations: 0.947952 %matplotlib inline df = pd.DataFrame(dict(x=xs, y=ys, label=clusters, title=titles)) groups = df.groupby(&#39;label&#39;) fig, ax = plt.subplots(figsize=(16,8) ) for name, group in groups: ax.plot(group.x, group.y, marker=&#39;o&#39;, linestyle=&#39;&#39;, ms=12, label=cluster_names[name], color=cluster_colors[name], mec=&#39;none&#39;) ax.legend(numpoints=1) #we do not present the tiles of items to not make the graph overwhelming #for i in range(len(df)): #ax.text(df.ix[i][&#39;x&#39;], df.ix[i][&#39;y&#39;], df.ix[i][&#39;title&#39;], size=4) plt.show() We observe that the results are not as bad as we initially thought. Although there is some partial overlapping, the groups are quite distinguished. There is no doubt, however, that we can optimize them much further. We should mention that items with a few words are not presented in the graph . I also notice that there are some items written in a differenet laguage than English. We currently not handle them and as a result their classification is in fact random. There are some of the misplaced dots in the diagramm. Moreover, there is more work to be done with the data cleaning and preprocessing. One way is to optimize the parameters of tdidf vectorization, use doc2vec for vectorization . Or we can use an another technique such Affinity Propagation,Spectral Clustering or more recent methods like HDBSCAN and Variational Autoencoders, which i would love to develop. PS: To run the code, you can do it directly from jupyter if the required dependencies are installed or you can export it as .py file and run it with an ide or directly via the console.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png">
+  <link rel="manifest" href="/assets/img/icons/site.webmanifest">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico">
+  <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
+  <meta name="application-name" content="Sergios Karagiannakos">
+  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
+  <!-- <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77"> -->
+  <meta name="theme-color" content="#ffffff">
+
+  
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-WMXQPRS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-WMXQPRS');
+</script>
+
+
+  
+
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+</head>
+
+
+  <body class="site">
+
+    
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMXQPRS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    <!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="/"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" itemprop="url">
+                  <span itemprop="name">Home</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about" itemprop="url">
+                  <span itemprop="name">About</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/portfolio" itemprop="url">
+                  <span itemprop="name">Portfolio</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/blog" itemprop="url">
+                  <span itemprop="name">Blog</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/contact" itemprop="url">
+                  <span itemprop="name">Contact</span>
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->
+
+    
+
+  <div class="hero" style="background-image: url( //assets/img/posts/nlp_20_0.jpg">
+  
+    <div class="hero__wrap">
+      
+      <h2 class="hero__title">Document clustering</h2>
+      <p class="hero__meta">
+        
+        
+                
+        
+        <span class="far fa-clock"> &nbsp Jul 14, 2018</span>
+        <span>&nbsp &nbsp</span>
+        <span class="far fa-calendar">  &nbsp 
+            12 mins
+         read</span>
+      </p>
+    </div>
+  </div>
+
+  
+
+
+        
+    <div class="container">
+        <article class="post-content" itemprop="articleBody">
+
+        <h1 id="document-clustering">Document clustering</h1>
+
+<p>Lets get started…</p>
+
+<p>In order to classify the items based on their content, I decided to use K- means algorithm. Due to the fact the the items are un-labeled , it is clearly a unsupervised learning problem and one of the best solution should be K-Means. Of course we can use a different algorithm, such as Gaussian mixture models or even deep learning methods such as Autoencoders. I will use python with Jupyter notebook, to combine the code and the results with the documentation.</p>
+
+<p>I develop the code in Anaconda environment and i use the following dependencies:</p>
+
+<p>Pandas for data handing</p>
+
+<p>Sklearn for machine learning and preprocessing</p>
+
+<p>Matplotlib for plotting</p>
+
+<p>Ntlk for natural language algorithms</p>
+
+<p>BeautifulSoup to parse the text from xml file and get rid of the tags</p>
+
+<h3 id="parsing-the-data">Parsing the Data</h3>
+
+<p>The function parseXML uses the xml.etree.ElementTree to parse the data. I decided to use only the title and the description of the items for the clustering, which are the most relevant to semasiology. Because of the fact that the description is not raw tex , we extract the text with the BeautifulSoup library, as I already mention. Also we drop the items with a very small description , because they affect the final clustering. We can consider that they all belong to an extra cluster. Of course, there are ways to include them, but I do not use them for the moment.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="n">ET</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+
+<span class="kn">import</span> <span class="nn">nltk</span>
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span> <span class="nn">sklearn.externals</span> <span class="kn">import</span> <span class="n">joblib</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_extraction.text</span> <span class="kn">import</span> <span class="n">TfidfVectorizer</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">cosine_similarity</span>
+
+<span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s">'punkt'</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
+<span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">SnowballStemmer</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="k">def</span> <span class="nf">parseXML</span><span class="p">(</span><span class="n">xmlfile</span><span class="p">):</span>
+
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">xmlfile</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+
+    <span class="n">titles</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">descriptions</span><span class="o">=</span><span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">'./channel/item'</span><span class="p">):</span>
+
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+     
+            <span class="k">if</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">tag</span><span class="o">==</span><span class="s">'title'</span> <span class="p">):</span>
+                <span class="n">titles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s">'description'</span> <span class="p">):</span>
+
+                <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">'utf8'</span><span class="p">,</span><span class="s">'ignore'</span><span class="p">),</span> <span class="s">"lxml"</span><span class="p">)</span>
+                <span class="n">strtext</span><span class="o">=</span><span class="n">soup</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">u'</span><span class="se">\xa0</span><span class="s">'</span><span class="p">,</span> <span class="s">u' '</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">'</span><span class="se">\n</span><span class="s">'</span><span class="p">,</span><span class="s">' '</span><span class="p">)</span>
+                            
+                <span class="n">descriptions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">strtext</span><span class="p">)</span>
+                    
+    <span class="k">return</span> <span class="n">titles</span><span class="p">,</span><span class="n">descriptions</span>
+
+<span class="c1">#remove items with short descriptions
+</span><span class="n">bef_titles</span><span class="p">,</span><span class="n">bef_descriptions</span> <span class="o">=</span> <span class="n">parseXML</span><span class="p">(</span><span class="s">'data.source.rss-feeds.xml'</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'Count of items before dropping:'</span> <span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">bef_titles</span><span class="p">))</span>
+
+<span class="n">titles</span><span class="o">=</span><span class="p">[]</span>
+<span class="n">descriptions</span><span class="o">=</span><span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bef_titles</span><span class="p">)):</span>
+    
+    <span class="k">if</span> <span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">bef_descriptions</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">500</span><span class="p">):</span>
+        <span class="n">titles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bef_titles</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">descriptions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bef_descriptions</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">'Count of items after:'</span> <span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">titles</span><span class="p">))</span>
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[nltk_data] Downloading package punkt to
+[nltk_data]     C:\Users\sergi\AppData\Roaming\nltk_data...
+[nltk_data]   Package punkt is already up-to-date!
+Count of items before dropping: 1662
+Count of items after: 1130
+</code></pre></div></div>
+
+<h3 id="tokenizing-and-stemming">Tokenizing and stemming</h3>
+
+<p>The next step is to tokenize the text into words,remove any morphological affixes and drop common words such as articles and prepositions.This can be done with built-in functions of ntlk.I  the end, we get two distinct vocabularies(one tokenized andstemmed and one only tokenized ) and we combine them to a pandas dataframe.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">tokenize_and_stem</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    
+    <span class="c1">#tokenize
+</span>    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">word</span> <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">nltk</span><span class="o">.</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">sent</span><span class="p">)]</span>
+    <span class="n">filtered_tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1">#keep only letters
+</span>    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">'[a-zA-Z]'</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+            <span class="n">filtered_tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="c1">#stemming
+</span>    <span class="n">stems</span> <span class="o">=</span> <span class="p">[</span><span class="n">stemmer</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">filtered_tokens</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">stems</span>
+
+
+<span class="k">def</span> <span class="nf">tokenize_only</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+   
+    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">word</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">nltk</span><span class="o">.</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">sent</span><span class="p">)]</span>
+    <span class="n">filtered_tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">'[a-zA-Z]'</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+            <span class="n">filtered_tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">filtered_tokens</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># nltk's English stopwords and stemmer
+</span><span class="n">stemmer</span> <span class="o">=</span> <span class="n">SnowballStemmer</span><span class="p">(</span><span class="s">"english"</span><span class="p">)</span>
+
+<span class="c1">#create steam and tokenized voucabularies
+</span><span class="n">totalvocab_stemmed</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">totalvocab_tokenized</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">descriptions</span><span class="p">:</span>
+    <span class="n">allwords_stemmed</span> <span class="o">=</span> <span class="n">tokenize_and_stem</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>  
+    <span class="n">totalvocab_stemmed</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">allwords_stemmed</span><span class="p">)</span>  
+
+    <span class="n">allwords_tokenized</span> <span class="o">=</span> <span class="n">tokenize_only</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">totalvocab_tokenized</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">allwords_tokenized</span><span class="p">)</span>
+
+<span class="n">vocab_frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s">'words'</span><span class="p">:</span> <span class="n">totalvocab_tokenized</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="n">totalvocab_stemmed</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">'there are '</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">vocab_frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s">' items in vocab_frame'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>there are 481437 items in vocab_frame
+</code></pre></div></div>
+
+<h3 id="vectorizing-and-stemming">Vectorizing and stemming</h3>
+
+<p>Before we load the data into the K- means algorithm , it is essential to vectorize them. The most popular technique is Tdidf Vectorizer, which create a matrix based on the frequency of words in the documents and this is the one we are going to use. Basically, it shows how important is a word to a document .It is worth to mention that, as a future work word2vec and doc2vec may be a much more efficient to represent the relationships between the items.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#Tf-idf
+</span>
+
+<span class="n">tfidf_vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span><span class="n">max_df</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">max_features</span><span class="o">=</span><span class="mi">200000</span><span class="p">,</span><span class="n">min_df</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">stop_words</span><span class="o">=</span><span class="s">'english'</span><span class="p">,</span>
+                                 <span class="n">use_idf</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenize_and_stem</span><span class="p">,</span> <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+
+<span class="n">tfidf_matrix</span> <span class="o">=</span> <span class="n">tfidf_vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">descriptions</span><span class="p">)</span> 
+<span class="k">print</span><span class="p">(</span><span class="s">'Td idf Matrix shape: '</span><span class="p">,</span><span class="n">tfidf_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="n">terms</span> <span class="o">=</span> <span class="n">tfidf_vectorizer</span><span class="o">.</span><span class="n">get_feature_names</span><span class="p">()</span>
+
+<span class="c1">#calculate the distance matrix . I will use them in the visualization of the cluster.
+</span><span class="n">dist</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">tfidf_matrix</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Td idf Matrix shape:  (1130, 74)
+</code></pre></div></div>
+
+<h3 id="k-means">K means</h3>
+
+<p>The actual clustering takes place here, where K means produces 5 clusters based on the Td-idf matrix. We can easily predict that this will not be the optimal solution, cause it takes into consideration only the frequency of each word in the document.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">num_clusters</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="n">km</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">num_clusters</span><span class="p">)</span>
+<span class="n">km</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tfidf_matrix</span><span class="p">)</span>
+
+<span class="n">clusters</span> <span class="o">=</span> <span class="n">km</span><span class="o">.</span><span class="n">labels_</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>To present the cluster, i create a pandas Dataframe indexed by the clusters. The top 6 words of each cluster are presented below. We notice that the clustering is far from perfect as some words are in more than one cluster. Also there isn’t a clear distinction between the semantic content of clusters. We can easily see that terms related to work includes in more that one clusters.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">items</span> <span class="o">=</span> <span class="p">{</span> <span class="s">'title'</span><span class="p">:</span> <span class="n">titles</span><span class="p">,</span> <span class="s">'description'</span><span class="p">:</span> <span class="n">descriptions</span><span class="p">}</span>
+
+<span class="n">frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">clusters</span><span class="p">]</span> <span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span> <span class="s">'title'</span><span class="p">,</span><span class="s">'cluster'</span><span class="p">])</span>
+
+
+<span class="k">print</span><span class="p">(</span><span class="s">"Top terms per cluster:"</span><span class="p">)</span>
+
+<span class="c1"># sort cluster centers by proximity to centroid
+</span><span class="n">order_centroids</span> <span class="o">=</span> <span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"Cluster </span><span class="si">%</span><span class="s">d words:"</span> <span class="o">%</span> <span class="n">i</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s">''</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">order_centroids</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="mi">6</span><span class="p">]:</span>  <span class="c1"># replace 6 with n words per cluster
+</span>        <span class="k">print</span><span class="p">(</span><span class="s">' </span><span class="si">%</span><span class="s">s'</span> <span class="o">%</span> <span class="n">vocab_frame</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">terms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">' '</span><span class="p">)]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">end</span><span class="o">=</span><span class="s">','</span><span class="p">)</span>
+        
+        
+    <span class="k">print</span><span class="p">()</span>    
+    
+    <span class="c1">#print("Cluster %d titles:" % i, end='')
+</span>    <span class="c1">#for title in frame.ix[i]['title'].values.tolist():
+</span>       <span class="c1">#print(' %s,' % title, end='')
+</span>
+   
+
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Top terms per cluster:
+Cluster 0 words: labour, employability, european, social, work, eu,
+Cluster 1 words: occupational, sectors, skill, employability, services, workers,
+Cluster 2 words: skill, job, labour, develop, market, cedefop,
+Cluster 3 words: education, training, learning, vocational, education, cedefop,
+Cluster 4 words: rates, unemployment, area, employability, increasingly, stated,
+</code></pre></div></div>
+
+<h3 id="visualization">Visualization</h3>
+
+<p>To visualize the clustering , we should first reduce their dimensionality. We achieved that with t-SNE(t-Distributed Stochastic Neighbor Embedding) from sklearn.manifold library. Another way would pe to use PCA or Multi-Demiensional Scaling(MDS).</p>
+
+<p>The plotting is done with matplotlib library.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">os</span>  <span class="c1"># for os.path.basename
+</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="n">mpl</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.manifold</span> <span class="kn">import</span> <span class="n">TSNE</span>
+
+
+<span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">perplexity</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="c1"># dist is the distance matrix 
+</span><span class="n">pos</span> <span class="o">=</span> <span class="n">tsne</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span>  
+
+<span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">pos</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+
+<span class="n">cluster_colors</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s">'#1b9e77'</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s">'#d95f02'</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s">'#7570b3'</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s">'#e7298a'</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="s">'#66a61e'</span><span class="p">}</span>
+
+<span class="n">cluster_names</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s">'A'</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span> <span class="s">'B'</span><span class="p">,</span>  <span class="mi">2</span><span class="p">:</span> <span class="s">'C'</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s">'D'</span><span class="p">,</span>  <span class="mi">4</span><span class="p">:</span> <span class="s">'E'</span><span class="p">}</span>
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[t-SNE] Computing pairwise distances...
+[t-SNE] Computing 121 nearest neighbors...
+[t-SNE] Computed conditional probabilities for sample 1000 / 1130
+[t-SNE] Computed conditional probabilities for sample 1130 / 1130
+[t-SNE] Mean sigma: 1.785805
+[t-SNE] KL divergence after 100 iterations with early exaggeration: 0.947952
+[t-SNE] Error after 125 iterations: 0.947952
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span> 
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">ys</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">clusters</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">titles</span><span class="p">))</span> 
+
+<span class="n">groups</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s">'label'</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span> <span class="p">)</span>
+
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">group</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">'o'</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s">''</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> 
+            <span class="n">label</span><span class="o">=</span><span class="n">cluster_names</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">cluster_colors</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">mec</span><span class="o">=</span><span class="s">'none'</span><span class="p">)</span>
+    
+        
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">numpoints</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  
+
+<span class="c1">#we do not present the tiles of items to not make the graph overwhelming
+#for i in range(len(df)):
+</span>    <span class="c1">#ax.text(df.ix[i]['x'], df.ix[i]['y'], df.ix[i]['title'], size=4)  
+</span>
+    
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+</code></pre></div></div>
+
+<p><img src="//assets/img/posts/nlp_20_0.jpg" alt="Clustering result" /></p>
+
+<p>We observe that the results are not as bad as we initially thought.  Although there is some partial overlapping, the groups are quite distinguished. There is no doubt, however, that we can optimize them much further.</p>
+
+<p>We should mention that items with a few words are not presented in the graph . I also notice that there are some items written in a differenet laguage than English. We currently not handle them and as a result their classification is in fact random. There are some of the misplaced dots in the diagramm.</p>
+
+<p>Moreover, there is more work to be done with the data cleaning and preprocessing.</p>
+
+<p>One way is to optimize the parameters of tdidf vectorization, use <a href="https://arxiv.org/abs/1405.4053">doc2vec</a> for vectorization . Or we can use an another technique such Affinity Propagation,Spectral Clustering or more recent methods like HDBSCAN and <a href="https://arxiv.org/abs/1611.05148">Variational Autoencoders</a>, which i would love to develop.</p>
+
+<p>PS: To run the code, you can do it directly from jupyter if the required dependencies are installed or you can export it as .py file and run it with an ide or directly via the console.</p>
+
+
+
+        </article>
+        <div class="post-content controls__inner">
+        <div class="controls__item prev">
+            
+        </div>
+
+        <div class="controls__item next">
+            
+            <span>Next</span>
+            <a href="/Neural_Network_from_scratch/">
+            Neural Network from scratch...
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="#fillColor" d="M.353 9.282c-.37.434-.323 1.09.106 1.465a1.016 1.016 0 0 0 1.446-.107L5.75 6.125a1.05 1.05 0 0 0-.017-1.378L1.784.34A1.015 1.015 0 0 0 .336.27a1.05 1.05 0 0 0-.07 1.468l3.34 3.725L.353 9.282z"/>
+                </svg>
+                </span>
+            </a>
+            
+        </div>
+        </div>
+    </div>
+
+
+  
+
+
+    
+
+<section class="paralax-mf footer-paralax bg-image " >
+<footer class="site-footer">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-md-12 text-center">
+        <p>
+          <a href="https://www.linkedin.com/in/sergios-karagiannakos " class="social-item"><span class="fab fa-linkedin"></span></a>
+          <a href="https://www.instagram.com/sergios_krg" class="social-item"><span class="fab fa-instagram"></span></a>
+          <a href="https://www.twitter.com/karsergios" class="social-item"><span class="fab fa-twitter"></span></a>
+          <a href="https://www.facebook.com/sergios.karagiannakos" class="social-item"><span class="fab fa-facebook"></span></a>
+          <a href="https://github.com/SergiosKar" class="social-item"><span class="fab fa-github"></span></a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+        <p class="col-12 text-center footer_text">
+        <span>&copy; 2019 Sergios Karagiannakos. All rights reserved.</span>
+        </p>
+    </div>
+  </div>
+</footer>
+</section>
+<!-- JS -->
+ <!-- JavaScript Libraries -->
+ <script src="//lib/jquery/jquery.min.js"></script>
+ <script src="//lib/jquery/jquery-migrate.min.js"></script>
+ <script src="//lib/popper/popper.min.js"></script>
+ <script src="//lib/bootstrap/js/bootstrap.min.js"></script>
+ <script src="//lib/easing/easing.min.js"></script>
+ <script src="//lib/counterup/jquery.waypoints.min.js"></script>
+ <script src="//lib/counterup/jquery.counterup.js"></script>
+ <script src="//lib/lightbox/js/lightbox.min.js"></script>
+ <script src="//lib/typed/typed.min.js"></script>
+ <script src="//js/scripts.js"></script>
+ <script src="//js/contact_form.js"></script>
+
+
+
+  </body>
+
+</html>
+
+
+

@@ -1,0 +1,29 @@
+
+<section class="site-section" id="section-blog">
+    <div class="container">
+            <div class="row">
+                    <div class="col-sm-12 mt-5">
+                      <div class="title-box text-center">
+                        <h3 class="title-a">
+                          {{page.title}}
+                        </h3>
+                        <!-- <p class="subtitle-a">
+                          What do I offer?
+                        </p> -->
+                        <div class="line-mf"></div>
+                      </div>
+                    </div>
+                  </div>
+        <div class="blog-mf">
+            <div class="row" itemscope="" itemtype="http://schema.org/Blog">
+           
+
+            {% for post in site.posts  %}
+                {% include components/blog_card.html %}
+            {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</section>
+  

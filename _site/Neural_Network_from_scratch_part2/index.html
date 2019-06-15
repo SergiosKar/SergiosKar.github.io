@@ -1,0 +1,394 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Neural Network from scratch-part 2 | Sergios Karagiannakos</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Neural Network from scratch-part 2" />
+<meta name="author" content="Sergios Karagiannakos" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Convolutional neural network In this part we are going to examine how we can improve our library by adding a convolutional neural network structure to use on a dataset of images. No one can argue that convolutional neural networks are the best way to classify and train images and this is why they have so much use in computer vision systems. The goal, of course, is to use again GPU’s and OpenCL as ConvNets require more computing resourses and memory than plain fully connected networks. Let’s begin. First of all , we have to remember that CovNets in their simpler forms consist of a convolutional layer, a pooling layer and a fully connected layer. Luckily we have implemented the last one . So all it remains are the two first. Convolutional layer This time i am not gonna get into much details about the C++ part and how we will build the basic structure of our ConvNet (i did that in the first part for Fully Connected ayers) , but i will dive on the kernels code, whch i think is the most interesting. In those layers, we convolve the input image with a small size kernel and we acquire the fearure map. kernel void convolve(global float *image, global Filter* filters, global float * featMap,int filterWidth,int inWidth,int featmapdim){ const int xIn=get_global_id(0);//cols const int yIn=get_global_id(1);//rows const int z=get_global_id(2);//filters float sum=0; for (int r=0;r&lt;filterWidth;r++){ for (int c=0;c&lt;filterWidth;c++){ sum+= filters[z].weights[c*filterWidth +r]*image[(xIn+c)+inWidth*(yIn+r)]; } } sum +=filters[z].bias; featMap[(xIn+yIn*featmapdim +z*featmapdim*featmapdim)] =relu(sum); } As you can tell, we are based on the hypothesis that each pixel of the feature map is calculated parallelly as it is inherently independent from all the others. So if we have an image 28x28 and we use a kernel 5x5, we will need 24x24=576 threads to run simultaneously. The backward propagation is a little more tricky because there are not many online resourses to actually provide the equations for a convolutional layer. If we translate the above in c code we get: kernel void deltas(global Node * nodes,global Node * nextnodes,global float *deltas,global int *indexes,int dim,int nextnumNodes,int pooldim){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); int i = xIn+yIn*pooldim +z*pooldim*pooldim; float delta = 0; for (int j = 0; j !=nextnumNodes; j++) delta += nextnodes[j].delta * nextnodes[j].weights[i]; delta *= devsigmoid(nodes[i].output); for(int r=0;r&lt;2;r++){ for(int c=0;c&lt;2;c++){ if((c*2+r)==indexes[i]) deltas[(2*xIn+r)+(2*yIn+c)*dim+z*dim*dim]=delta; } } } kernel void backpropcnn( global float* featMap,global float* deltas,global Filter* filters,int featmapdim,int imagedim,int filterdim,float a,global float* Image){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); float sum=0; for (int r=0;r&lt;featmapdim;r++){ for (int c=0;c&lt;featmapdim;c++){ sum+= deltas[(c+r*featmapdim +z*featmapdim*featmapdim)]*Image[(xIn+r)+imagedim *(yIn+c)]; } } filters[z].weights[(xIn+filterdim *yIn)] -=a*sum; } Pooling layer The pooling layers is just a down sampling of the feature map into a new map with smaller size. There are two kind of pooling : Average and max pooling with the second being the most used. In max pooling, we just define a filter (usually of size 2x2) and we apply it on the feture map. The goal of the filter is to simply extract the maximum value of the filter window in the image. kernel void pooling( global float* prevfeatMap,global float* poolMap,global int* indexes,int Width,int pooldim){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); float max=0; int index = 0; for (int r=0;r&lt;2;r++){ for (int c=0;c&lt;2;c++){ if(prevfeatMap[(yIn+c)*Width*z +(xIn+r)]&gt;max){ max=prevfeatMap[(yIn+c)*Width*z +(xIn+r)]; index=c*2+r; } } } poolMap[(xIn+yIn*pooldim +z*pooldim*pooldim)]=max; indexes[(xIn+yIn*pooldim +z*pooldim*pooldim)]=index; } As fas as the backward propagation is concerned, there are no actual gradient calculations. All we need to do is to upsample the matrix. In fact we pass the gradient on the “winning unit” of the forward propagation. That is the reason why we build and indexes matrix in the above snippet before, in which we keep the position of all “ winning units”. This functionality is visible on the “deltas” function, which is responsible for the calculation of the gradient errors. To run the kernels code, we follow the next steps: Pass the data in matrix format (OpenCV can be used for that) Define the cl: Buffers and the cl::Kernels Run the kernels with the following code: //Forward convKern.setArg(0, d_InputBuffer);convKern.setArg(1, d_FiltersBuffer);convKern.setArg(2, d_FeatMapBuffer); convKern.setArg(3, filterdim);convKern.setArg(4, inputdim);convKern.setArg(5, featmapdim); err = (OpenCL::clqueue).enqueueNDRangeKernel(convKern, cl::NullRange, cl::NDRange(featmapdim, featmapdim, convLayer.numOfFilters), cl::NullRange); poolKern.setArg(0, d_FeatMapBuffer);poolKern.setArg(1, d_PoolBuffer);poolKern.setArg(2, d_PoolIndexBuffer); poolKern.setArg(3, featmapdim);poolKern.setArg(4, pooldim); err = (OpenCL::clqueue).enqueueNDRangeKernel(poolKern, cl::NullRange, cl::NDRange(pooldim, pooldim, convLayer.numOfFilters), cl::NullRange); //Backward deltasKern.setArg(0, d_layersBuffers[0]);deltasKern.setArg(1, d_layersBuffers[1]);deltasKern.setArg(2, d_deltasBuffer);deltasKern.setArg(3, d_PoolIndexBuffer); deltasKern.setArg(4, featmapdim);deltasKern.setArg(5, h_netVec[1]);deltasKern.setArg(6, pooldim); err = (OpenCL::clqueue).enqueueNDRangeKernel(deltasKern, cl::NullRange, cl::NDRange(pooldim, pooldim,convLayer.numOfFilters), cl::NullRange); backpropcnnKern.setArg(0, d_FeatMapBuffer);backpropcnnKern.setArg(1, d_rotatedImgBuffer);backpropcnnKern.setArg(2, d_FiltersBuffer); backpropcnnKern.setArg(3, featmapdim);backpropcnnKern.setArg(4, inputdim);backpropcnnKern.setArg(5, filterdim); backpropcnnKern.setArg(6, lr);backpropcnnKern.setArg(7, d_InputBuffer); err = (OpenCL::clqueue).enqueueNDRangeKernel(backpropcnnKern, cl::NullRange, cl::NDRange(filterdim, filterdim,convLayer.numOfFilters), cl::NullRange); It was not that bad right? If you have to get only one thing from the two posts is that neural networks and deep learning in general is nothing more than operations between matrixes that try to approximate a mathematical function. Even if that function is how to drive a car. We saw that building a Neural network from scratch and even program them to run on GPU’s is not something quite difficult. All you need is a basic understanding of linar algebra and a a glimpse of how graphical processing units work. I should remind you one more that the complete code can be found on my repository on github. Neural netwok library" />
+<meta property="og:description" content="Convolutional neural network In this part we are going to examine how we can improve our library by adding a convolutional neural network structure to use on a dataset of images. No one can argue that convolutional neural networks are the best way to classify and train images and this is why they have so much use in computer vision systems. The goal, of course, is to use again GPU’s and OpenCL as ConvNets require more computing resourses and memory than plain fully connected networks. Let’s begin. First of all , we have to remember that CovNets in their simpler forms consist of a convolutional layer, a pooling layer and a fully connected layer. Luckily we have implemented the last one . So all it remains are the two first. Convolutional layer This time i am not gonna get into much details about the C++ part and how we will build the basic structure of our ConvNet (i did that in the first part for Fully Connected ayers) , but i will dive on the kernels code, whch i think is the most interesting. In those layers, we convolve the input image with a small size kernel and we acquire the fearure map. kernel void convolve(global float *image, global Filter* filters, global float * featMap,int filterWidth,int inWidth,int featmapdim){ const int xIn=get_global_id(0);//cols const int yIn=get_global_id(1);//rows const int z=get_global_id(2);//filters float sum=0; for (int r=0;r&lt;filterWidth;r++){ for (int c=0;c&lt;filterWidth;c++){ sum+= filters[z].weights[c*filterWidth +r]*image[(xIn+c)+inWidth*(yIn+r)]; } } sum +=filters[z].bias; featMap[(xIn+yIn*featmapdim +z*featmapdim*featmapdim)] =relu(sum); } As you can tell, we are based on the hypothesis that each pixel of the feature map is calculated parallelly as it is inherently independent from all the others. So if we have an image 28x28 and we use a kernel 5x5, we will need 24x24=576 threads to run simultaneously. The backward propagation is a little more tricky because there are not many online resourses to actually provide the equations for a convolutional layer. If we translate the above in c code we get: kernel void deltas(global Node * nodes,global Node * nextnodes,global float *deltas,global int *indexes,int dim,int nextnumNodes,int pooldim){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); int i = xIn+yIn*pooldim +z*pooldim*pooldim; float delta = 0; for (int j = 0; j !=nextnumNodes; j++) delta += nextnodes[j].delta * nextnodes[j].weights[i]; delta *= devsigmoid(nodes[i].output); for(int r=0;r&lt;2;r++){ for(int c=0;c&lt;2;c++){ if((c*2+r)==indexes[i]) deltas[(2*xIn+r)+(2*yIn+c)*dim+z*dim*dim]=delta; } } } kernel void backpropcnn( global float* featMap,global float* deltas,global Filter* filters,int featmapdim,int imagedim,int filterdim,float a,global float* Image){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); float sum=0; for (int r=0;r&lt;featmapdim;r++){ for (int c=0;c&lt;featmapdim;c++){ sum+= deltas[(c+r*featmapdim +z*featmapdim*featmapdim)]*Image[(xIn+r)+imagedim *(yIn+c)]; } } filters[z].weights[(xIn+filterdim *yIn)] -=a*sum; } Pooling layer The pooling layers is just a down sampling of the feature map into a new map with smaller size. There are two kind of pooling : Average and max pooling with the second being the most used. In max pooling, we just define a filter (usually of size 2x2) and we apply it on the feture map. The goal of the filter is to simply extract the maximum value of the filter window in the image. kernel void pooling( global float* prevfeatMap,global float* poolMap,global int* indexes,int Width,int pooldim){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); float max=0; int index = 0; for (int r=0;r&lt;2;r++){ for (int c=0;c&lt;2;c++){ if(prevfeatMap[(yIn+c)*Width*z +(xIn+r)]&gt;max){ max=prevfeatMap[(yIn+c)*Width*z +(xIn+r)]; index=c*2+r; } } } poolMap[(xIn+yIn*pooldim +z*pooldim*pooldim)]=max; indexes[(xIn+yIn*pooldim +z*pooldim*pooldim)]=index; } As fas as the backward propagation is concerned, there are no actual gradient calculations. All we need to do is to upsample the matrix. In fact we pass the gradient on the “winning unit” of the forward propagation. That is the reason why we build and indexes matrix in the above snippet before, in which we keep the position of all “ winning units”. This functionality is visible on the “deltas” function, which is responsible for the calculation of the gradient errors. To run the kernels code, we follow the next steps: Pass the data in matrix format (OpenCV can be used for that) Define the cl: Buffers and the cl::Kernels Run the kernels with the following code: //Forward convKern.setArg(0, d_InputBuffer);convKern.setArg(1, d_FiltersBuffer);convKern.setArg(2, d_FeatMapBuffer); convKern.setArg(3, filterdim);convKern.setArg(4, inputdim);convKern.setArg(5, featmapdim); err = (OpenCL::clqueue).enqueueNDRangeKernel(convKern, cl::NullRange, cl::NDRange(featmapdim, featmapdim, convLayer.numOfFilters), cl::NullRange); poolKern.setArg(0, d_FeatMapBuffer);poolKern.setArg(1, d_PoolBuffer);poolKern.setArg(2, d_PoolIndexBuffer); poolKern.setArg(3, featmapdim);poolKern.setArg(4, pooldim); err = (OpenCL::clqueue).enqueueNDRangeKernel(poolKern, cl::NullRange, cl::NDRange(pooldim, pooldim, convLayer.numOfFilters), cl::NullRange); //Backward deltasKern.setArg(0, d_layersBuffers[0]);deltasKern.setArg(1, d_layersBuffers[1]);deltasKern.setArg(2, d_deltasBuffer);deltasKern.setArg(3, d_PoolIndexBuffer); deltasKern.setArg(4, featmapdim);deltasKern.setArg(5, h_netVec[1]);deltasKern.setArg(6, pooldim); err = (OpenCL::clqueue).enqueueNDRangeKernel(deltasKern, cl::NullRange, cl::NDRange(pooldim, pooldim,convLayer.numOfFilters), cl::NullRange); backpropcnnKern.setArg(0, d_FeatMapBuffer);backpropcnnKern.setArg(1, d_rotatedImgBuffer);backpropcnnKern.setArg(2, d_FiltersBuffer); backpropcnnKern.setArg(3, featmapdim);backpropcnnKern.setArg(4, inputdim);backpropcnnKern.setArg(5, filterdim); backpropcnnKern.setArg(6, lr);backpropcnnKern.setArg(7, d_InputBuffer); err = (OpenCL::clqueue).enqueueNDRangeKernel(backpropcnnKern, cl::NullRange, cl::NDRange(filterdim, filterdim,convLayer.numOfFilters), cl::NullRange); It was not that bad right? If you have to get only one thing from the two posts is that neural networks and deep learning in general is nothing more than operations between matrixes that try to approximate a mathematical function. Even if that function is how to drive a car. We saw that building a Neural network from scratch and even program them to run on GPU’s is not something quite difficult. All you need is a basic understanding of linar algebra and a a glimpse of how graphical processing units work. I should remind you one more that the complete code can be found on my repository on github. Neural netwok library" />
+<link rel="canonical" href="//neural_network_from_scratch_part2/" />
+<meta property="og:url" content="//neural_network_from_scratch_part2/" />
+<meta property="og:site_name" content="Sergios Karagiannakos" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-08-01T00:00:00+03:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","url":"//neural_network_from_scratch_part2/","headline":"Neural Network from scratch-part 2","dateModified":"2018-08-01T00:00:00+03:00","datePublished":"2018-08-01T00:00:00+03:00","mainEntityOfPage":{"@type":"WebPage","@id":"//neural_network_from_scratch_part2/"},"author":{"@type":"Person","name":"Sergios Karagiannakos"},"description":"Convolutional neural network In this part we are going to examine how we can improve our library by adding a convolutional neural network structure to use on a dataset of images. No one can argue that convolutional neural networks are the best way to classify and train images and this is why they have so much use in computer vision systems. The goal, of course, is to use again GPU’s and OpenCL as ConvNets require more computing resourses and memory than plain fully connected networks. Let’s begin. First of all , we have to remember that CovNets in their simpler forms consist of a convolutional layer, a pooling layer and a fully connected layer. Luckily we have implemented the last one . So all it remains are the two first. Convolutional layer This time i am not gonna get into much details about the C++ part and how we will build the basic structure of our ConvNet (i did that in the first part for Fully Connected ayers) , but i will dive on the kernels code, whch i think is the most interesting. In those layers, we convolve the input image with a small size kernel and we acquire the fearure map. kernel void convolve(global float *image, global Filter* filters, global float * featMap,int filterWidth,int inWidth,int featmapdim){ const int xIn=get_global_id(0);//cols const int yIn=get_global_id(1);//rows const int z=get_global_id(2);//filters float sum=0; for (int r=0;r&lt;filterWidth;r++){ for (int c=0;c&lt;filterWidth;c++){ sum+= filters[z].weights[c*filterWidth +r]*image[(xIn+c)+inWidth*(yIn+r)]; } } sum +=filters[z].bias; featMap[(xIn+yIn*featmapdim +z*featmapdim*featmapdim)] =relu(sum); } As you can tell, we are based on the hypothesis that each pixel of the feature map is calculated parallelly as it is inherently independent from all the others. So if we have an image 28x28 and we use a kernel 5x5, we will need 24x24=576 threads to run simultaneously. The backward propagation is a little more tricky because there are not many online resourses to actually provide the equations for a convolutional layer. If we translate the above in c code we get: kernel void deltas(global Node * nodes,global Node * nextnodes,global float *deltas,global int *indexes,int dim,int nextnumNodes,int pooldim){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); int i = xIn+yIn*pooldim +z*pooldim*pooldim; float delta = 0; for (int j = 0; j !=nextnumNodes; j++) delta += nextnodes[j].delta * nextnodes[j].weights[i]; delta *= devsigmoid(nodes[i].output); for(int r=0;r&lt;2;r++){ for(int c=0;c&lt;2;c++){ if((c*2+r)==indexes[i]) deltas[(2*xIn+r)+(2*yIn+c)*dim+z*dim*dim]=delta; } } } kernel void backpropcnn( global float* featMap,global float* deltas,global Filter* filters,int featmapdim,int imagedim,int filterdim,float a,global float* Image){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); float sum=0; for (int r=0;r&lt;featmapdim;r++){ for (int c=0;c&lt;featmapdim;c++){ sum+= deltas[(c+r*featmapdim +z*featmapdim*featmapdim)]*Image[(xIn+r)+imagedim *(yIn+c)]; } } filters[z].weights[(xIn+filterdim *yIn)] -=a*sum; } Pooling layer The pooling layers is just a down sampling of the feature map into a new map with smaller size. There are two kind of pooling : Average and max pooling with the second being the most used. In max pooling, we just define a filter (usually of size 2x2) and we apply it on the feture map. The goal of the filter is to simply extract the maximum value of the filter window in the image. kernel void pooling( global float* prevfeatMap,global float* poolMap,global int* indexes,int Width,int pooldim){ const int xIn=get_global_id(0); const int yIn=get_global_id(1); const int z=get_global_id(2); float max=0; int index = 0; for (int r=0;r&lt;2;r++){ for (int c=0;c&lt;2;c++){ if(prevfeatMap[(yIn+c)*Width*z +(xIn+r)]&gt;max){ max=prevfeatMap[(yIn+c)*Width*z +(xIn+r)]; index=c*2+r; } } } poolMap[(xIn+yIn*pooldim +z*pooldim*pooldim)]=max; indexes[(xIn+yIn*pooldim +z*pooldim*pooldim)]=index; } As fas as the backward propagation is concerned, there are no actual gradient calculations. All we need to do is to upsample the matrix. In fact we pass the gradient on the “winning unit” of the forward propagation. That is the reason why we build and indexes matrix in the above snippet before, in which we keep the position of all “ winning units”. This functionality is visible on the “deltas” function, which is responsible for the calculation of the gradient errors. To run the kernels code, we follow the next steps: Pass the data in matrix format (OpenCV can be used for that) Define the cl: Buffers and the cl::Kernels Run the kernels with the following code: //Forward convKern.setArg(0, d_InputBuffer);convKern.setArg(1, d_FiltersBuffer);convKern.setArg(2, d_FeatMapBuffer); convKern.setArg(3, filterdim);convKern.setArg(4, inputdim);convKern.setArg(5, featmapdim); err = (OpenCL::clqueue).enqueueNDRangeKernel(convKern, cl::NullRange, cl::NDRange(featmapdim, featmapdim, convLayer.numOfFilters), cl::NullRange); poolKern.setArg(0, d_FeatMapBuffer);poolKern.setArg(1, d_PoolBuffer);poolKern.setArg(2, d_PoolIndexBuffer); poolKern.setArg(3, featmapdim);poolKern.setArg(4, pooldim); err = (OpenCL::clqueue).enqueueNDRangeKernel(poolKern, cl::NullRange, cl::NDRange(pooldim, pooldim, convLayer.numOfFilters), cl::NullRange); //Backward deltasKern.setArg(0, d_layersBuffers[0]);deltasKern.setArg(1, d_layersBuffers[1]);deltasKern.setArg(2, d_deltasBuffer);deltasKern.setArg(3, d_PoolIndexBuffer); deltasKern.setArg(4, featmapdim);deltasKern.setArg(5, h_netVec[1]);deltasKern.setArg(6, pooldim); err = (OpenCL::clqueue).enqueueNDRangeKernel(deltasKern, cl::NullRange, cl::NDRange(pooldim, pooldim,convLayer.numOfFilters), cl::NullRange); backpropcnnKern.setArg(0, d_FeatMapBuffer);backpropcnnKern.setArg(1, d_rotatedImgBuffer);backpropcnnKern.setArg(2, d_FiltersBuffer); backpropcnnKern.setArg(3, featmapdim);backpropcnnKern.setArg(4, inputdim);backpropcnnKern.setArg(5, filterdim); backpropcnnKern.setArg(6, lr);backpropcnnKern.setArg(7, d_InputBuffer); err = (OpenCL::clqueue).enqueueNDRangeKernel(backpropcnnKern, cl::NullRange, cl::NDRange(filterdim, filterdim,convLayer.numOfFilters), cl::NullRange); It was not that bad right? If you have to get only one thing from the two posts is that neural networks and deep learning in general is nothing more than operations between matrixes that try to approximate a mathematical function. Even if that function is how to drive a car. We saw that building a Neural network from scratch and even program them to run on GPU’s is not something quite difficult. All you need is a basic understanding of linar algebra and a a glimpse of how graphical processing units work. I should remind you one more that the complete code can be found on my repository on github. Neural netwok library","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png">
+  <link rel="manifest" href="/assets/img/icons/site.webmanifest">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico">
+  <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
+  <meta name="application-name" content="Sergios Karagiannakos">
+  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
+  <!-- <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77"> -->
+  <meta name="theme-color" content="#ffffff">
+
+  
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-WMXQPRS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-WMXQPRS');
+</script>
+
+
+  
+
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+</head>
+
+
+  <body class="site">
+
+    
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMXQPRS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    <!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="/"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" itemprop="url">
+                  <span itemprop="name">Home</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about" itemprop="url">
+                  <span itemprop="name">About</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/portfolio" itemprop="url">
+                  <span itemprop="name">Portfolio</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/blog" itemprop="url">
+                  <span itemprop="name">Blog</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/contact" itemprop="url">
+                  <span itemprop="name">Contact</span>
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->
+
+    
+
+  <div class="hero" style="background-image: url( //assets/img/posts/NN.jpg">
+  
+    <div class="hero__wrap">
+      
+      <h2 class="hero__title">Neural Network from scratch-part 2</h2>
+      <p class="hero__meta">
+        
+        
+                
+        
+        <span class="far fa-clock"> &nbsp Aug 1, 2018</span>
+        <span>&nbsp &nbsp</span>
+        <span class="far fa-calendar">  &nbsp 
+            10 mins
+         read</span>
+      </p>
+    </div>
+  </div>
+
+  
+
+
+        
+    <div class="container">
+        <article class="post-content" itemprop="articleBody">
+
+        <h1 id="convolutional-neural-network">Convolutional neural network</h1>
+
+<p>In this part we are going to examine how we can improve our library by adding a convolutional neural network structure to use on a dataset of images.
+No one can argue that convolutional neural networks are the best way to classify and train images and this is why they have so much use in computer vision systems. The goal, of course, is to use again GPU’s and OpenCL as ConvNets require more computing resourses and memory than plain fully connected networks.</p>
+
+<p>Let’s begin.
+First of all , we have to remember that CovNets in their simpler forms consist of a convolutional layer, a pooling layer and a fully connected layer. Luckily we have implemented the last one . So all it remains are the two first.</p>
+
+<h2 id="convolutional-layer">Convolutional layer</h2>
+
+<p>This time i am not gonna get into much details about the C++ part and how we will build the basic structure of our ConvNet (i did that in the first part for Fully Connected ayers) , but i will dive on the kernels code, whch i think is the most interesting. In those layers, we convolve the input image with a small size kernel and we acquire the fearure map.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">kernel</span>  <span class="kt">void</span> <span class="n">convolve</span><span class="p">(</span><span class="n">global</span> <span class="kt">float</span> <span class="o">*</span><span class="n">image</span><span class="p">,</span> <span class="n">global</span> <span class="n">Filter</span><span class="o">*</span> <span class="n">filters</span><span class="p">,</span> <span class="n">global</span> <span class="kt">float</span> <span class="o">*</span> <span class="n">featMap</span><span class="p">,</span><span class="kt">int</span> <span class="n">filterWidth</span><span class="p">,</span><span class="kt">int</span> <span class="n">inWidth</span><span class="p">,</span><span class="kt">int</span> <span class="n">featmapdim</span><span class="p">){</span>
+         
+     <span class="k">const</span> <span class="kt">int</span> <span class="n">xIn</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="c1">//cols</span>
+     <span class="k">const</span> <span class="kt">int</span> <span class="n">yIn</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="c1">//rows</span>
+	 <span class="k">const</span> <span class="kt">int</span> <span class="n">z</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span><span class="c1">//filters</span>
+     
+     <span class="kt">float</span> <span class="n">sum</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+     <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">r</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">r</span><span class="o">&lt;</span><span class="n">filterWidth</span><span class="p">;</span><span class="n">r</span><span class="o">++</span><span class="p">){</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">filterWidth</span><span class="p">;</span><span class="n">c</span><span class="o">++</span><span class="p">){</span>
+             <span class="n">sum</span><span class="o">+=</span> <span class="n">filters</span><span class="p">[</span><span class="n">z</span><span class="p">].</span><span class="n">weights</span><span class="p">[</span><span class="n">c</span><span class="o">*</span><span class="n">filterWidth</span> <span class="o">+</span><span class="n">r</span><span class="p">]</span><span class="o">*</span><span class="n">image</span><span class="p">[(</span><span class="n">xIn</span><span class="o">+</span><span class="n">c</span><span class="p">)</span><span class="o">+</span><span class="n">inWidth</span><span class="o">*</span><span class="p">(</span><span class="n">yIn</span><span class="o">+</span><span class="n">r</span><span class="p">)];</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    
+	<span class="n">sum</span> <span class="o">+=</span><span class="n">filters</span><span class="p">[</span><span class="n">z</span><span class="p">].</span><span class="n">bias</span><span class="p">;</span>
+     
+	<span class="n">featMap</span><span class="p">[(</span><span class="n">xIn</span><span class="o">+</span><span class="n">yIn</span><span class="o">*</span><span class="n">featmapdim</span> <span class="o">+</span><span class="n">z</span><span class="o">*</span><span class="n">featmapdim</span><span class="o">*</span><span class="n">featmapdim</span><span class="p">)]</span> <span class="o">=</span><span class="n">relu</span><span class="p">(</span><span class="n">sum</span><span class="p">);</span>
+		
+	
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>As you can tell, we are based on the hypothesis that each pixel of the feature map is calculated parallelly as it is inherently independent from all the others. So if we have an image 28x28 and we use a kernel 5x5, we will need 24x24=576 threads to run simultaneously.
+The backward propagation is a little more tricky because there are not many online resourses to actually provide the equations for a convolutional layer.</p>
+
+<p><img src="//assets/img/posts/conv_bpa.jpg" alt="Equations" /></p>
+
+<p><img src="//assets/img/posts/conv_bpa_deltas.jpg" alt="Equations" /></p>
+
+<p>If we translate the above in c code we get:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">kernel</span> <span class="kt">void</span> <span class="n">deltas</span><span class="p">(</span><span class="n">global</span> <span class="n">Node</span> <span class="o">*</span> <span class="n">nodes</span><span class="p">,</span><span class="n">global</span> <span class="n">Node</span> <span class="o">*</span> <span class="n">nextnodes</span><span class="p">,</span><span class="n">global</span> <span class="kt">float</span> <span class="o">*</span><span class="n">deltas</span><span class="p">,</span><span class="n">global</span> <span class="kt">int</span> <span class="o">*</span><span class="n">indexes</span><span class="p">,</span><span class="kt">int</span> <span class="n">dim</span><span class="p">,</span><span class="kt">int</span> <span class="n">nextnumNodes</span><span class="p">,</span><span class="kt">int</span> <span class="n">pooldim</span><span class="p">){</span>
+ 
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">xIn</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">yIn</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">z</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+
+    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">xIn</span><span class="o">+</span><span class="n">yIn</span><span class="o">*</span><span class="n">pooldim</span> <span class="o">+</span><span class="n">z</span><span class="o">*</span><span class="n">pooldim</span><span class="o">*</span><span class="n">pooldim</span><span class="p">;</span>
+ 
+    <span class="kt">float</span> <span class="n">delta</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">!=</span><span class="n">nextnumNodes</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">+=</span> <span class="n">nextnodes</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">delta</span> <span class="o">*</span> <span class="n">nextnodes</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+  
+	<span class="n">delta</span> <span class="o">*=</span> <span class="n">devsigmoid</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">output</span><span class="p">);</span>
+	 <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">r</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">r</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">;</span><span class="n">r</span><span class="o">++</span><span class="p">){</span>
+			<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">;</span><span class="n">c</span><span class="o">++</span><span class="p">){</span>
+				<span class="k">if</span><span class="p">((</span><span class="n">c</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="n">r</span><span class="p">)</span><span class="o">==</span><span class="n">indexes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+					<span class="n">deltas</span><span class="p">[(</span><span class="mi">2</span><span class="o">*</span><span class="n">xIn</span><span class="o">+</span><span class="n">r</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">yIn</span><span class="o">+</span><span class="n">c</span><span class="p">)</span><span class="o">*</span><span class="n">dim</span><span class="o">+</span><span class="n">z</span><span class="o">*</span><span class="n">dim</span><span class="o">*</span><span class="n">dim</span><span class="p">]</span><span class="o">=</span><span class="n">delta</span><span class="p">;</span>					
+			<span class="p">}</span>
+	 
+	 <span class="p">}</span>
+ <span class="p">}</span>
+
+
+ <span class="n">kernel</span> <span class="kt">void</span> <span class="n">backpropcnn</span><span class="p">(</span> <span class="n">global</span> <span class="kt">float</span><span class="o">*</span> <span class="n">featMap</span><span class="p">,</span><span class="n">global</span> <span class="kt">float</span><span class="o">*</span> <span class="n">deltas</span><span class="p">,</span><span class="n">global</span> <span class="n">Filter</span><span class="o">*</span> <span class="n">filters</span><span class="p">,</span><span class="kt">int</span> <span class="n">featmapdim</span><span class="p">,</span><span class="kt">int</span> <span class="n">imagedim</span><span class="p">,</span><span class="kt">int</span> <span class="n">filterdim</span><span class="p">,</span><span class="kt">float</span> <span class="n">a</span><span class="p">,</span><span class="n">global</span> <span class="kt">float</span><span class="o">*</span> <span class="n">Image</span><span class="p">){</span>
+ 
+         <span class="k">const</span> <span class="kt">int</span> <span class="n">xIn</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+         <span class="k">const</span> <span class="kt">int</span> <span class="n">yIn</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+		 <span class="k">const</span> <span class="kt">int</span> <span class="n">z</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+         
+         <span class="kt">float</span> <span class="n">sum</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+         <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">r</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">r</span><span class="o">&lt;</span><span class="n">featmapdim</span><span class="p">;</span><span class="n">r</span><span class="o">++</span><span class="p">){</span>
+             <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="n">featmapdim</span><span class="p">;</span><span class="n">c</span><span class="o">++</span><span class="p">){</span>
+                 
+                 <span class="n">sum</span><span class="o">+=</span> <span class="n">deltas</span><span class="p">[(</span><span class="n">c</span><span class="o">+</span><span class="n">r</span><span class="o">*</span><span class="n">featmapdim</span> <span class="o">+</span><span class="n">z</span><span class="o">*</span><span class="n">featmapdim</span><span class="o">*</span><span class="n">featmapdim</span><span class="p">)]</span><span class="o">*</span><span class="n">Image</span><span class="p">[(</span><span class="n">xIn</span><span class="o">+</span><span class="n">r</span><span class="p">)</span><span class="o">+</span><span class="n">imagedim</span> <span class="o">*</span><span class="p">(</span><span class="n">yIn</span><span class="o">+</span><span class="n">c</span><span class="p">)];</span>
+                 <span class="p">}</span>
+             <span class="p">}</span>
+          
+        <span class="n">filters</span><span class="p">[</span><span class="n">z</span><span class="p">].</span><span class="n">weights</span><span class="p">[(</span><span class="n">xIn</span><span class="o">+</span><span class="n">filterdim</span> <span class="o">*</span><span class="n">yIn</span><span class="p">)]</span> <span class="o">-=</span><span class="n">a</span><span class="o">*</span><span class="n">sum</span><span class="p">;</span>
+ <span class="p">}</span>
+
+</code></pre></div></div>
+
+<h2 id="pooling-layer">Pooling layer</h2>
+
+<p>The pooling layers is just a down sampling of the feature map into a new map with smaller size. There are two kind of pooling : Average and max pooling with the second being the most used. In max pooling, we just define a filter (usually of size 2x2) and we apply it on the feture map. The goal of the filter is to simply extract the maximum value of the filter window in the image.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">kernel</span> <span class="kt">void</span> <span class="n">pooling</span><span class="p">(</span> <span class="n">global</span> <span class="kt">float</span><span class="o">*</span> <span class="n">prevfeatMap</span><span class="p">,</span><span class="n">global</span> <span class="kt">float</span><span class="o">*</span> <span class="n">poolMap</span><span class="p">,</span><span class="n">global</span> <span class="kt">int</span><span class="o">*</span> <span class="n">indexes</span><span class="p">,</span><span class="kt">int</span> <span class="n">Width</span><span class="p">,</span><span class="kt">int</span> <span class="n">pooldim</span><span class="p">){</span>
+ 
+ <span class="k">const</span> <span class="kt">int</span> <span class="n">xIn</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+ <span class="k">const</span> <span class="kt">int</span> <span class="n">yIn</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+ <span class="k">const</span> <span class="kt">int</span> <span class="n">z</span><span class="o">=</span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+
+     <span class="kt">float</span> <span class="n">max</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+         <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">r</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">r</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">;</span><span class="n">r</span><span class="o">++</span><span class="p">){</span>
+             <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">c</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">;</span><span class="n">c</span><span class="o">++</span><span class="p">){</span>
+                                
+                 <span class="k">if</span><span class="p">(</span><span class="n">prevfeatMap</span><span class="p">[(</span><span class="n">yIn</span><span class="o">+</span><span class="n">c</span><span class="p">)</span><span class="o">*</span><span class="n">Width</span><span class="o">*</span><span class="n">z</span> <span class="o">+</span><span class="p">(</span><span class="n">xIn</span><span class="o">+</span><span class="n">r</span><span class="p">)]</span><span class="o">&gt;</span><span class="n">max</span><span class="p">){</span>
+                       <span class="n">max</span><span class="o">=</span><span class="n">prevfeatMap</span><span class="p">[(</span><span class="n">yIn</span><span class="o">+</span><span class="n">c</span><span class="p">)</span><span class="o">*</span><span class="n">Width</span><span class="o">*</span><span class="n">z</span> <span class="o">+</span><span class="p">(</span><span class="n">xIn</span><span class="o">+</span><span class="n">r</span><span class="p">)];</span>
+					   <span class="n">index</span><span class="o">=</span><span class="n">c</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="n">r</span><span class="p">;</span>
+					   <span class="p">}</span>
+						
+                 <span class="p">}</span>
+             <span class="p">}</span>
+             <span class="n">poolMap</span><span class="p">[(</span><span class="n">xIn</span><span class="o">+</span><span class="n">yIn</span><span class="o">*</span><span class="n">pooldim</span> <span class="o">+</span><span class="n">z</span><span class="o">*</span><span class="n">pooldim</span><span class="o">*</span><span class="n">pooldim</span><span class="p">)]</span><span class="o">=</span><span class="n">max</span><span class="p">;</span>
+			 <span class="n">indexes</span><span class="p">[(</span><span class="n">xIn</span><span class="o">+</span><span class="n">yIn</span><span class="o">*</span><span class="n">pooldim</span> <span class="o">+</span><span class="n">z</span><span class="o">*</span><span class="n">pooldim</span><span class="o">*</span><span class="n">pooldim</span><span class="p">)]</span><span class="o">=</span><span class="n">index</span><span class="p">;</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+<p>As fas as the backward propagation is concerned, there are no actual gradient calculations. All we need to do is to upsample the matrix. In fact we pass the gradient on the “winning unit” of the forward propagation. That is the reason why we build and indexes matrix in the above snippet before, in which we keep  the position of all “ winning units”. This functionality is visible on the “deltas” function, which is responsible for the calculation of the gradient errors.</p>
+
+<p>To run the kernels code, we follow the next steps:</p>
+<ul>
+  <li>Pass the data in matrix format (OpenCV can be used for that)</li>
+  <li>Define the cl: Buffers and the cl::Kernels</li>
+  <li>Run the kernels with the following code:</li>
+</ul>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//Forward</span>
+<span class="n">convKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">d_InputBuffer</span><span class="p">);</span><span class="n">convKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d_FiltersBuffer</span><span class="p">);</span><span class="n">convKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">d_FeatMapBuffer</span><span class="p">);</span>
+<span class="n">convKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">filterdim</span><span class="p">);</span><span class="n">convKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">inputdim</span><span class="p">);</span><span class="n">convKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">featmapdim</span><span class="p">);</span>
+
+<span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="n">OpenCL</span><span class="o">::</span><span class="n">clqueue</span><span class="p">).</span><span class="n">enqueueNDRangeKernel</span><span class="p">(</span><span class="n">convKern</span><span class="p">,</span> <span class="n">cl</span><span class="o">::</span><span class="n">NullRange</span><span class="p">,</span>
+	<span class="n">cl</span><span class="o">::</span><span class="n">NDRange</span><span class="p">(</span><span class="n">featmapdim</span><span class="p">,</span> <span class="n">featmapdim</span><span class="p">,</span> <span class="n">convLayer</span><span class="p">.</span><span class="n">numOfFilters</span><span class="p">),</span>
+	<span class="n">cl</span><span class="o">::</span><span class="n">NullRange</span><span class="p">);</span>
+
+
+<span class="n">poolKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">d_FeatMapBuffer</span><span class="p">);</span><span class="n">poolKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d_PoolBuffer</span><span class="p">);</span><span class="n">poolKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">d_PoolIndexBuffer</span><span class="p">);</span>
+<span class="n">poolKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">featmapdim</span><span class="p">);</span><span class="n">poolKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">pooldim</span><span class="p">);</span>
+
+<span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="n">OpenCL</span><span class="o">::</span><span class="n">clqueue</span><span class="p">).</span><span class="n">enqueueNDRangeKernel</span><span class="p">(</span><span class="n">poolKern</span><span class="p">,</span> <span class="n">cl</span><span class="o">::</span><span class="n">NullRange</span><span class="p">,</span>
+	<span class="n">cl</span><span class="o">::</span><span class="n">NDRange</span><span class="p">(</span><span class="n">pooldim</span><span class="p">,</span> <span class="n">pooldim</span><span class="p">,</span> <span class="n">convLayer</span><span class="p">.</span><span class="n">numOfFilters</span><span class="p">),</span>
+	<span class="n">cl</span><span class="o">::</span><span class="n">NullRange</span><span class="p">);</span>
+
+<span class="c1">//Backward</span>
+<span class="n">deltasKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">d_layersBuffers</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span><span class="n">deltasKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d_layersBuffers</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span><span class="n">deltasKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">d_deltasBuffer</span><span class="p">);</span><span class="n">deltasKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">d_PoolIndexBuffer</span><span class="p">);</span>
+<span class="n">deltasKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">featmapdim</span><span class="p">);</span><span class="n">deltasKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">h_netVec</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span><span class="n">deltasKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">pooldim</span><span class="p">);</span>
+
+<span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="n">OpenCL</span><span class="o">::</span><span class="n">clqueue</span><span class="p">).</span><span class="n">enqueueNDRangeKernel</span><span class="p">(</span><span class="n">deltasKern</span><span class="p">,</span> <span class="n">cl</span><span class="o">::</span><span class="n">NullRange</span><span class="p">,</span>
+	<span class="n">cl</span><span class="o">::</span><span class="n">NDRange</span><span class="p">(</span><span class="n">pooldim</span><span class="p">,</span> <span class="n">pooldim</span><span class="p">,</span><span class="n">convLayer</span><span class="p">.</span><span class="n">numOfFilters</span><span class="p">),</span>
+	<span class="n">cl</span><span class="o">::</span><span class="n">NullRange</span><span class="p">);</span>
+
+<span class="n">backpropcnnKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">d_FeatMapBuffer</span><span class="p">);</span><span class="n">backpropcnnKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d_rotatedImgBuffer</span><span class="p">);</span><span class="n">backpropcnnKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">d_FiltersBuffer</span><span class="p">);</span>
+<span class="n">backpropcnnKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">featmapdim</span><span class="p">);</span><span class="n">backpropcnnKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">inputdim</span><span class="p">);</span><span class="n">backpropcnnKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">filterdim</span><span class="p">);</span>
+<span class="n">backpropcnnKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">lr</span><span class="p">);</span><span class="n">backpropcnnKern</span><span class="p">.</span><span class="n">setArg</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">d_InputBuffer</span><span class="p">);</span>
+
+<span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="n">OpenCL</span><span class="o">::</span><span class="n">clqueue</span><span class="p">).</span><span class="n">enqueueNDRangeKernel</span><span class="p">(</span><span class="n">backpropcnnKern</span><span class="p">,</span> <span class="n">cl</span><span class="o">::</span><span class="n">NullRange</span><span class="p">,</span>
+	<span class="n">cl</span><span class="o">::</span><span class="n">NDRange</span><span class="p">(</span><span class="n">filterdim</span><span class="p">,</span> <span class="n">filterdim</span><span class="p">,</span><span class="n">convLayer</span><span class="p">.</span><span class="n">numOfFilters</span><span class="p">),</span>
+	<span class="n">cl</span><span class="o">::</span><span class="n">NullRange</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>It was not that bad right? If you have to get only one thing from the two posts is that neural networks and deep learning in general is nothing more than operations between matrixes that try to approximate a mathematical function. Even if that function is how to drive a car. 
+We saw that building a Neural network from scratch and even program them to run on GPU’s is not something quite difficult. All you need is a basic understanding of linar algebra and a a glimpse of how graphical processing units work.</p>
+
+<p>I should remind you one more that the complete code can be found on my repository on github. <a href="https://github.com/SergiosKar/Convolutional-Neural-Network">Neural netwok library</a></p>
+
+
+
+        </article>
+        <div class="post-content controls__inner">
+        <div class="controls__item prev">
+            
+
+            <span>Previous</span>
+            <a href="/Neural_Network_from_scratch/">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="fillColor" d="M5.647 1.718c.37-.434.323-1.09-.106-1.465A1.016 1.016 0 0 0 4.095.36L.25 4.875a1.05 1.05 0 0 0 .017 1.378l3.95 4.407c.38.424 1.03.456 1.448.07a1.05 1.05 0 0 0 .07-1.468l-3.34-3.725 3.253-3.819z"/>
+                    </svg>
+                </span>
+            Neural Network from scratch...
+            </a>
+            
+        </div>
+
+        <div class="controls__item next">
+            
+            <span>Next</span>
+            <a href="/Deep_learning/">
+            Deep Learning- The future o...
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="#fillColor" d="M.353 9.282c-.37.434-.323 1.09.106 1.465a1.016 1.016 0 0 0 1.446-.107L5.75 6.125a1.05 1.05 0 0 0-.017-1.378L1.784.34A1.015 1.015 0 0 0 .336.27a1.05 1.05 0 0 0-.07 1.468l3.34 3.725L.353 9.282z"/>
+                </svg>
+                </span>
+            </a>
+            
+        </div>
+        </div>
+    </div>
+
+
+  
+
+
+    
+
+<section class="paralax-mf footer-paralax bg-image " >
+<footer class="site-footer">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-md-12 text-center">
+        <p>
+          <a href="https://www.linkedin.com/in/sergios-karagiannakos " class="social-item"><span class="fab fa-linkedin"></span></a>
+          <a href="https://www.instagram.com/sergios_krg" class="social-item"><span class="fab fa-instagram"></span></a>
+          <a href="https://www.twitter.com/karsergios" class="social-item"><span class="fab fa-twitter"></span></a>
+          <a href="https://www.facebook.com/sergios.karagiannakos" class="social-item"><span class="fab fa-facebook"></span></a>
+          <a href="https://github.com/SergiosKar" class="social-item"><span class="fab fa-github"></span></a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+        <p class="col-12 text-center footer_text">
+        <span>&copy; 2019 Sergios Karagiannakos. All rights reserved.</span>
+        </p>
+    </div>
+  </div>
+</footer>
+</section>
+<!-- JS -->
+ <!-- JavaScript Libraries -->
+ <script src="//lib/jquery/jquery.min.js"></script>
+ <script src="//lib/jquery/jquery-migrate.min.js"></script>
+ <script src="//lib/popper/popper.min.js"></script>
+ <script src="//lib/bootstrap/js/bootstrap.min.js"></script>
+ <script src="//lib/easing/easing.min.js"></script>
+ <script src="//lib/counterup/jquery.waypoints.min.js"></script>
+ <script src="//lib/counterup/jquery.counterup.js"></script>
+ <script src="//lib/lightbox/js/lightbox.min.js"></script>
+ <script src="//lib/typed/typed.min.js"></script>
+ <script src="//js/scripts.js"></script>
+ <script src="//js/contact_form.js"></script>
+
+
+
+  </body>
+
+</html>
+
+
+

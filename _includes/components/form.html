@@ -1,0 +1,168 @@
+<!-- 
+
+ <form id="contactForm" action="https://formspree.io/{{site.email}}" method="post" novalidate>
+  <div class="form__input half">
+    <label for="name">Name</label>
+    <input type="text" name="name" id="name" autocomplete="name" required>
+  </div>
+
+  <div class="form__input input half">
+    <label for="email">Email</label>
+    <input type="email" name="_replyto" id="email" autocomplete="email" required>
+  </div>
+
+
+
+  <input type="hidden" name="_subject" value="Website Form submission">
+  <input type="hidden" name="_format" value="plain" />
+  <input class="hidden" type="text" name="_gotcha">
+  <button class="btn js-submit" type="submit" value="Send">Subscribe</button>
+</form>  -->
+
+
+<section class="site-section bg-transparent" id="section-contact">
+		<div class="container">
+		  <div class="row">
+			<div class="col-sm-12">
+			  <div class="contact-mf">
+				<div id="contact" class="">
+				  <div class="row">
+					<div class="col-md-6">
+					  <div class="title-box-2">
+						<h5 class="title-left">
+						  Send me a message
+						</h5>
+					  </div>
+					  <div>
+						  <form  class="contactForm" id="Form" action="https://formspree.io/{{site.email}}" method="post" novalidate>
+						  <div id="sendmessage">Your message has been sent. Thank you!</div>
+						  <div id="errormessage"></div>
+						  <div class="row">
+							<div class="col-md-12 mb-3">
+							  <div class="form-group form__input">
+								<input type="text" name="name" class="form-control" id="name" placeholder="Your Name" data-rule="minlen:4" data-msg="Please enter at least 4 chars" />
+								<div class="validation"></div>
+							  </div>
+							</div>
+							<div class="col-md-12 mb-3">
+							  <div class="form-group form__input">
+								<input type="email" class="form-control" name="_replyto" id="email" placeholder="Your Email" data-rule="email" data-msg="Please enter a valid email" />
+								<div class="validation"></div>
+							  </div>
+							</div>
+							<div class="col-md-12 mb-3">
+							  <div class="form-group form__input">
+								<textarea class="form-control" name="message" rows="5" data-rule="required" data-msg="Please write something for us" placeholder="Message"></textarea>
+								<div class="validation"></div>
+							  </div>
+							</div>
+							<input type="hidden" name="_subject" value="Website Form submission">
+								<input type="hidden" name="_format" value="plain" />
+								<input class="hidden" type="text" name="_gotcha" style="display:none">	
+ 								<input type="hidden" name="_subject" value="Website Form submission">
+  
+							<div class="col-md-12">
+							  <button type="submit" value="Send" class="btn btn-primary  js-submit">Send Message</button>
+							</div>
+						  </div>
+						</form>
+					  </div>
+					</div>
+					<div class="col-md-6">
+					  <div class="title-box-2 pt-4 pt-md-0">
+						<h5 class="title-left">
+						  Get in Touch
+						</h5>
+					  </div>
+					  <div class="more-info">
+						<p class="lead">
+						  {{page.contact_text}}
+						</p>
+						<ul class="list-ico">
+						 
+						  <li><span class="ion-email"> <a href="mailto:{{site.email}}">&nbsp;{{site.email}}</a></span> </li>
+						</ul>
+					  </div>
+					  <div class="socials">
+						<ul>
+						  <li><a href="https://www.linkedin.com/in/{{ site.linkedin_username}} " class="ico-circle"><span class="fab fa-linkedin"></span></a></li>
+						  <li><a href="https://www.instagram.com/{{ site.instagram_username }}" class="ico-circle"><span class="fab fa-instagram"></span></a></li>
+						  <li><a href="https://www.twitter.com/{{ site.twitter_username }}" class="ico-circle"><span class="fab fa-twitter"></span></a></li>
+						  <li><a href="https://www.facebook.com/{{ site.facebook_username }}" class="ico-circle"><span class="fab fa-facebook"></span></a></li>
+						  <li><a href="https://github.com/{{ site.github_username }}" class="ico-circle"><span class="fab fa-github"></span></a></li>
+						</ul>
+					  </div>
+					</div>
+				  </div>
+				</div>
+			  </div>
+			</div>
+		  </div>
+			</div>
+	  </section>
+  
+  
+
+<section class="bg-transparent" id="section-contact">
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="contact-mf">
+					<div id="contact" class="">
+				  		<div class="row">
+							<div class="col-md-12">
+								<div class="title-box-2">
+									<h5 class="title-left">
+									Subscribe
+									</h5>
+								</div>
+								<div class="more-info">
+
+									<p class="lead">
+										{{page.subscribe_text}}
+									</p>
+								</div>
+								<!-- <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css"> -->
+								<div >
+									<form action="https://github.us19.list-manage.com/subscribe/post?u=448fff055977d7df421b0961a&amp;id=6c6a43a8e5" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate subscribeForm" target="_blank" novalidate>
+										<div class="row">
+										
+											<div class="col-md-12 mb-3">
+												<div class="form-group mc-field-group">
+													<input type="email" class="form-control" name="email" id="mce-Email" placeholder="Your Email" data-rule="email" data-msg="Please enter a valid email" />
+												</div>
+											</div>
+											<div class="col-md-12 mb-3">
+												<div class="form-group mc-field-group">
+													<input type="text" name="FNAME" class="form-control" id="mce-Fname" placeholder="First Name" data-rule="minlen:4" data-msg="Please enter at least 4 chars" />
+												</div>
+											</div>
+											<div class="col-md-12 mb-3">
+												<div class="form-group mc-field-group">
+													<input type="text" name="LNAME" class="form-control" id="mce-Lname" placeholder="Last Name" data-rule="minlen:4" data-msg="Please enter at least 4 chars" />
+												</div>
+											</div>
+											<div class="col-md-12  mb-3 clear" id="mce-responses">
+												<div class="response" id="mce-error-response" style="display:none"></div>
+												<div class="response" id="mce-success-response" style="display:none"></div>
+												<div></div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->		
+												<input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="btn btn-primary "></div>
+
+											</div>
+											
+
+										</div>
+									</form>
+								</div>
+								<script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+  
+	 

@@ -1,0 +1,477 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Semantic Segmentation in the era of Neural Networks | Sergios Karagiannakos</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Semantic Segmentation in the era of Neural Networks" />
+<meta name="author" content="Sergios Karagiannakos" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Semantic Segmentation in the era of Neural Networks Image segmentation is one of the fundamentals tasks in computer vision alongside with object recognition and detection. In semantic segmentation, the goal is to classify each pixel of the image in a specific category. The difference from image classification is that we do not classify the whole image in one class but each individual pixel. So, we have a set of predefined categories and we want to assign a label in each pixel of the image. And we do this assignment based on the context of the different objects in the image. We can see a real-world example in the above image. Each pixel of the image has been assigned to a specific label and represented by a different color. Red for people, blue for cars, green for trees etc. It is important to mention that semantic segmentation is different from instance segmentation in which we distinguish labels for instances of the same class. In that case, the people will all had a different color. But we do we fraking care? (by the way, if you don’t know what frak means, go binge watch Battlestar Galactica. It’s awesome). Why we need this high-detailed processing? It turns out that semantic segmentation has many different applications. You can guess the first from the above image. Self-driving cars. Self-driving cars need to know what they see. And they need to know everything. Every damn pixel. Another popular use is of course in robotics( industrial or not). I can’t list many more. Geosensing, agriculture, medical image diagnostics, facial segmentation, fashion. If you are convinced, let’s see how we can approach the task. It is not that difficult to figure out. Deep Learning It is no secret that deep neural networks revolutionize computer vision and especially image classification. From 2012 to today, it surpasses its predecessors by a big margin. It is now a fact that computers are better in image classification than humans. Inevitably then, we used the same techniques for semantic segmentation too. And did they work? Of course, they did. Convolutional Neural Networks are now the standard in the industry for these kinds of problems. I am not going to bore you with a historic flashback of all the architectures in the field. Instead, I will present to you the state of the art, as it is appearing in 2019. But first let’s define our problem more specifically: Each pixel of the image must be assigned to a class and colorized accordingly The input and the output image should have exactly the same size Each pixel on the input must correspond to a pixel in the exact same location on the output We need pixel-level accuracy to distinguish between different classes. Taken these into consideration, let’s proceed to the architecture: Fully Convolutional Network (FCN) Fully Convolutional networks consist of only convolutional and pooling layers, without the need fully connected. The original approach was to use a stack of same-sized convolutional layers to map the input image to the output one. Stanford University School of Engineering As you may imagine it produced quite good results, but it was extremely computationally expensive. The thing was that they couldn’t use any downsampling or pooling layers as it will mess up the location of the instances. And to maintain the image resolution, they need to add many layers to learn both low-level and high-level features. Thus, it ended being quite inefficient. To solve this problem, they proposed an encoder-decoder architecture. The encoder is a typical convolutional network such as AlexNet or ResNet and the decoder consists of deconvolutional (although I don’t like the term) and up-sampling layers. The goal of downsampling steps is to capture semantic/contextual information while the goal of upsampling is to recover spatial information. Stanford University School of Engineering That way, they managed to reduce significantly the time and space complexity. But also, the final result. Because the encoder reduces the image resolution, the segmentation lacks well-defined edges, meaning that the boundaries between the images are not clearly defined. To the rescue: Skips Connections. Skip connections bypass layers and transfer the information intact to the next layers. In our case, we use them to pass the information from early layers of the encoder to the decoder, bypassing the downsampling layers. And indeed, this helped improve the details of the segmentation with much more accurate shapes and edges. U-Net Based on the whole encoder-decoder and skip connection concept, the idea of Fully Convolutional Network expanded to U-net. U-net introduces symmetry in the FCN by increasing the size of the decoder to match the encoder and replaces the sum operation in skip connections with a concatenation. Due to the symmetry, we can transfer a lot more information from the downsampling layers to the upsampling ones (as there are more features maps now ), improving that way the resolution of the final output. https://datascience.stackexchange.com U-nets have originally developed for biomedical image segmentation, but they also used in a wide of different applications with many variations such as the addition of fully connected layers or residual blocks. To fully grasp the U-net idea, let’s write some code to realize how dead-simple it is. We are going to use python and keras framework to simplify thing even more. def unet(pretrained_weights = None,input_size = (256,256,1)): inputs = Input(input_size) conv1 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(inputs) conv1 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv1) pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) conv2 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool1) conv2 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv2) pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) conv3 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool2) conv3 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv3) pool3 = MaxPooling2D(pool_size=(2, 2))(conv3) conv4 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool3) conv4 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv4) drop4 = Dropout(0.5)(conv4) pool4 = MaxPooling2D(pool_size=(2, 2))(drop4) conv5 = Conv2D(1024, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool4) conv5 = Conv2D(1024, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv5) drop5 = Dropout(0.5)(conv5) up6 = Conv2D(512, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(drop5)) merge6 = concatenate([drop4,up6], axis = 3) conv6 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge6) conv6 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv6) up7 = Conv2D(256, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv6)) merge7 = concatenate([conv3,up7], axis = 3) conv7 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge7) conv7 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv7) up8 = Conv2D(128, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv7)) merge8 = concatenate([conv2,up8], axis = 3) conv8 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge8) conv8 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv8) up9 = Conv2D(64, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv8)) merge9 = concatenate([conv1,up9], axis = 3) conv9 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge9) conv9 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv9) conv9 = Conv2D(2, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv9) conv10 = Conv2D(1, 1, activation = &#39;sigmoid&#39;)(conv9) model = Model(input = inputs, output = conv10) model.compile(optimizer = Adam(lr = 1e-4), loss = &#39;binary_crossentropy&#39;, metrics = [&#39;accuracy&#39;]) #model.summary() if(pretrained_weights): model.load_weights(pretrained_weights) return model # the code is borrowed from zhixuhao https://github.com/zhixuhao Do you think I am kidding? That’s it. A bunch of convolutional, pooling and upsampling layers stacked together and a few concatenations to implement the skip connections. Dead-simple or what? Of course, we still need a lot of work to do like preprocess our input data, augment them and more importantly find them. What I mean is that gathering ground-images for our training is not an easy task at all. Just think that for every input image, we want its segmentation to find the error between them. And how can we construct the ground truth segmentations? By hand? That’s a possible way to do it. By a well- crafted script? Maybe. One thing is certain. It is not easy. Finally, I would like to mention that there are other pretty clever ways to perform semantic segmentation but most of them are built upon the FCN and U-Net. Some of them are: DeepLab which uses atrous convolutions Pyramid Scene Parsing Network Multi-path Refinement Networks Global Convolutional Networks Semantic segmentation is a very active field of research due to its high importance and emergency in real-world applications, so we expect to see a lot more papers over the next years. The combination of computer vision and deep learning is highly exciting and has given us tremendous progress in complicated tasks. Do you think that Tesla autonomous cars would have driven 1.2 billion miles by today without Deep Learning? I personally don’t think so. Let’s see what the future holds…" />
+<meta property="og:description" content="Semantic Segmentation in the era of Neural Networks Image segmentation is one of the fundamentals tasks in computer vision alongside with object recognition and detection. In semantic segmentation, the goal is to classify each pixel of the image in a specific category. The difference from image classification is that we do not classify the whole image in one class but each individual pixel. So, we have a set of predefined categories and we want to assign a label in each pixel of the image. And we do this assignment based on the context of the different objects in the image. We can see a real-world example in the above image. Each pixel of the image has been assigned to a specific label and represented by a different color. Red for people, blue for cars, green for trees etc. It is important to mention that semantic segmentation is different from instance segmentation in which we distinguish labels for instances of the same class. In that case, the people will all had a different color. But we do we fraking care? (by the way, if you don’t know what frak means, go binge watch Battlestar Galactica. It’s awesome). Why we need this high-detailed processing? It turns out that semantic segmentation has many different applications. You can guess the first from the above image. Self-driving cars. Self-driving cars need to know what they see. And they need to know everything. Every damn pixel. Another popular use is of course in robotics( industrial or not). I can’t list many more. Geosensing, agriculture, medical image diagnostics, facial segmentation, fashion. If you are convinced, let’s see how we can approach the task. It is not that difficult to figure out. Deep Learning It is no secret that deep neural networks revolutionize computer vision and especially image classification. From 2012 to today, it surpasses its predecessors by a big margin. It is now a fact that computers are better in image classification than humans. Inevitably then, we used the same techniques for semantic segmentation too. And did they work? Of course, they did. Convolutional Neural Networks are now the standard in the industry for these kinds of problems. I am not going to bore you with a historic flashback of all the architectures in the field. Instead, I will present to you the state of the art, as it is appearing in 2019. But first let’s define our problem more specifically: Each pixel of the image must be assigned to a class and colorized accordingly The input and the output image should have exactly the same size Each pixel on the input must correspond to a pixel in the exact same location on the output We need pixel-level accuracy to distinguish between different classes. Taken these into consideration, let’s proceed to the architecture: Fully Convolutional Network (FCN) Fully Convolutional networks consist of only convolutional and pooling layers, without the need fully connected. The original approach was to use a stack of same-sized convolutional layers to map the input image to the output one. Stanford University School of Engineering As you may imagine it produced quite good results, but it was extremely computationally expensive. The thing was that they couldn’t use any downsampling or pooling layers as it will mess up the location of the instances. And to maintain the image resolution, they need to add many layers to learn both low-level and high-level features. Thus, it ended being quite inefficient. To solve this problem, they proposed an encoder-decoder architecture. The encoder is a typical convolutional network such as AlexNet or ResNet and the decoder consists of deconvolutional (although I don’t like the term) and up-sampling layers. The goal of downsampling steps is to capture semantic/contextual information while the goal of upsampling is to recover spatial information. Stanford University School of Engineering That way, they managed to reduce significantly the time and space complexity. But also, the final result. Because the encoder reduces the image resolution, the segmentation lacks well-defined edges, meaning that the boundaries between the images are not clearly defined. To the rescue: Skips Connections. Skip connections bypass layers and transfer the information intact to the next layers. In our case, we use them to pass the information from early layers of the encoder to the decoder, bypassing the downsampling layers. And indeed, this helped improve the details of the segmentation with much more accurate shapes and edges. U-Net Based on the whole encoder-decoder and skip connection concept, the idea of Fully Convolutional Network expanded to U-net. U-net introduces symmetry in the FCN by increasing the size of the decoder to match the encoder and replaces the sum operation in skip connections with a concatenation. Due to the symmetry, we can transfer a lot more information from the downsampling layers to the upsampling ones (as there are more features maps now ), improving that way the resolution of the final output. https://datascience.stackexchange.com U-nets have originally developed for biomedical image segmentation, but they also used in a wide of different applications with many variations such as the addition of fully connected layers or residual blocks. To fully grasp the U-net idea, let’s write some code to realize how dead-simple it is. We are going to use python and keras framework to simplify thing even more. def unet(pretrained_weights = None,input_size = (256,256,1)): inputs = Input(input_size) conv1 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(inputs) conv1 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv1) pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) conv2 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool1) conv2 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv2) pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) conv3 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool2) conv3 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv3) pool3 = MaxPooling2D(pool_size=(2, 2))(conv3) conv4 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool3) conv4 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv4) drop4 = Dropout(0.5)(conv4) pool4 = MaxPooling2D(pool_size=(2, 2))(drop4) conv5 = Conv2D(1024, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool4) conv5 = Conv2D(1024, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv5) drop5 = Dropout(0.5)(conv5) up6 = Conv2D(512, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(drop5)) merge6 = concatenate([drop4,up6], axis = 3) conv6 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge6) conv6 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv6) up7 = Conv2D(256, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv6)) merge7 = concatenate([conv3,up7], axis = 3) conv7 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge7) conv7 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv7) up8 = Conv2D(128, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv7)) merge8 = concatenate([conv2,up8], axis = 3) conv8 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge8) conv8 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv8) up9 = Conv2D(64, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv8)) merge9 = concatenate([conv1,up9], axis = 3) conv9 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge9) conv9 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv9) conv9 = Conv2D(2, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv9) conv10 = Conv2D(1, 1, activation = &#39;sigmoid&#39;)(conv9) model = Model(input = inputs, output = conv10) model.compile(optimizer = Adam(lr = 1e-4), loss = &#39;binary_crossentropy&#39;, metrics = [&#39;accuracy&#39;]) #model.summary() if(pretrained_weights): model.load_weights(pretrained_weights) return model # the code is borrowed from zhixuhao https://github.com/zhixuhao Do you think I am kidding? That’s it. A bunch of convolutional, pooling and upsampling layers stacked together and a few concatenations to implement the skip connections. Dead-simple or what? Of course, we still need a lot of work to do like preprocess our input data, augment them and more importantly find them. What I mean is that gathering ground-images for our training is not an easy task at all. Just think that for every input image, we want its segmentation to find the error between them. And how can we construct the ground truth segmentations? By hand? That’s a possible way to do it. By a well- crafted script? Maybe. One thing is certain. It is not easy. Finally, I would like to mention that there are other pretty clever ways to perform semantic segmentation but most of them are built upon the FCN and U-Net. Some of them are: DeepLab which uses atrous convolutions Pyramid Scene Parsing Network Multi-path Refinement Networks Global Convolutional Networks Semantic segmentation is a very active field of research due to its high importance and emergency in real-world applications, so we expect to see a lot more papers over the next years. The combination of computer vision and deep learning is highly exciting and has given us tremendous progress in complicated tasks. Do you think that Tesla autonomous cars would have driven 1.2 billion miles by today without Deep Learning? I personally don’t think so. Let’s see what the future holds…" />
+<link rel="canonical" href="//semantic_segmentation/" />
+<meta property="og:url" content="//semantic_segmentation/" />
+<meta property="og:site_name" content="Sergios Karagiannakos" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2019-01-25T00:00:00+02:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","url":"//semantic_segmentation/","headline":"Semantic Segmentation in the era of Neural Networks","dateModified":"2019-01-25T00:00:00+02:00","datePublished":"2019-01-25T00:00:00+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"//semantic_segmentation/"},"author":{"@type":"Person","name":"Sergios Karagiannakos"},"description":"Semantic Segmentation in the era of Neural Networks Image segmentation is one of the fundamentals tasks in computer vision alongside with object recognition and detection. In semantic segmentation, the goal is to classify each pixel of the image in a specific category. The difference from image classification is that we do not classify the whole image in one class but each individual pixel. So, we have a set of predefined categories and we want to assign a label in each pixel of the image. And we do this assignment based on the context of the different objects in the image. We can see a real-world example in the above image. Each pixel of the image has been assigned to a specific label and represented by a different color. Red for people, blue for cars, green for trees etc. It is important to mention that semantic segmentation is different from instance segmentation in which we distinguish labels for instances of the same class. In that case, the people will all had a different color. But we do we fraking care? (by the way, if you don’t know what frak means, go binge watch Battlestar Galactica. It’s awesome). Why we need this high-detailed processing? It turns out that semantic segmentation has many different applications. You can guess the first from the above image. Self-driving cars. Self-driving cars need to know what they see. And they need to know everything. Every damn pixel. Another popular use is of course in robotics( industrial or not). I can’t list many more. Geosensing, agriculture, medical image diagnostics, facial segmentation, fashion. If you are convinced, let’s see how we can approach the task. It is not that difficult to figure out. Deep Learning It is no secret that deep neural networks revolutionize computer vision and especially image classification. From 2012 to today, it surpasses its predecessors by a big margin. It is now a fact that computers are better in image classification than humans. Inevitably then, we used the same techniques for semantic segmentation too. And did they work? Of course, they did. Convolutional Neural Networks are now the standard in the industry for these kinds of problems. I am not going to bore you with a historic flashback of all the architectures in the field. Instead, I will present to you the state of the art, as it is appearing in 2019. But first let’s define our problem more specifically: Each pixel of the image must be assigned to a class and colorized accordingly The input and the output image should have exactly the same size Each pixel on the input must correspond to a pixel in the exact same location on the output We need pixel-level accuracy to distinguish between different classes. Taken these into consideration, let’s proceed to the architecture: Fully Convolutional Network (FCN) Fully Convolutional networks consist of only convolutional and pooling layers, without the need fully connected. The original approach was to use a stack of same-sized convolutional layers to map the input image to the output one. Stanford University School of Engineering As you may imagine it produced quite good results, but it was extremely computationally expensive. The thing was that they couldn’t use any downsampling or pooling layers as it will mess up the location of the instances. And to maintain the image resolution, they need to add many layers to learn both low-level and high-level features. Thus, it ended being quite inefficient. To solve this problem, they proposed an encoder-decoder architecture. The encoder is a typical convolutional network such as AlexNet or ResNet and the decoder consists of deconvolutional (although I don’t like the term) and up-sampling layers. The goal of downsampling steps is to capture semantic/contextual information while the goal of upsampling is to recover spatial information. Stanford University School of Engineering That way, they managed to reduce significantly the time and space complexity. But also, the final result. Because the encoder reduces the image resolution, the segmentation lacks well-defined edges, meaning that the boundaries between the images are not clearly defined. To the rescue: Skips Connections. Skip connections bypass layers and transfer the information intact to the next layers. In our case, we use them to pass the information from early layers of the encoder to the decoder, bypassing the downsampling layers. And indeed, this helped improve the details of the segmentation with much more accurate shapes and edges. U-Net Based on the whole encoder-decoder and skip connection concept, the idea of Fully Convolutional Network expanded to U-net. U-net introduces symmetry in the FCN by increasing the size of the decoder to match the encoder and replaces the sum operation in skip connections with a concatenation. Due to the symmetry, we can transfer a lot more information from the downsampling layers to the upsampling ones (as there are more features maps now ), improving that way the resolution of the final output. https://datascience.stackexchange.com U-nets have originally developed for biomedical image segmentation, but they also used in a wide of different applications with many variations such as the addition of fully connected layers or residual blocks. To fully grasp the U-net idea, let’s write some code to realize how dead-simple it is. We are going to use python and keras framework to simplify thing even more. def unet(pretrained_weights = None,input_size = (256,256,1)): inputs = Input(input_size) conv1 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(inputs) conv1 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv1) pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) conv2 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool1) conv2 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv2) pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) conv3 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool2) conv3 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv3) pool3 = MaxPooling2D(pool_size=(2, 2))(conv3) conv4 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool3) conv4 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv4) drop4 = Dropout(0.5)(conv4) pool4 = MaxPooling2D(pool_size=(2, 2))(drop4) conv5 = Conv2D(1024, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(pool4) conv5 = Conv2D(1024, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv5) drop5 = Dropout(0.5)(conv5) up6 = Conv2D(512, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(drop5)) merge6 = concatenate([drop4,up6], axis = 3) conv6 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge6) conv6 = Conv2D(512, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv6) up7 = Conv2D(256, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv6)) merge7 = concatenate([conv3,up7], axis = 3) conv7 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge7) conv7 = Conv2D(256, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv7) up8 = Conv2D(128, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv7)) merge8 = concatenate([conv2,up8], axis = 3) conv8 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge8) conv8 = Conv2D(128, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv8) up9 = Conv2D(64, 2, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(UpSampling2D(size = (2,2))(conv8)) merge9 = concatenate([conv1,up9], axis = 3) conv9 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(merge9) conv9 = Conv2D(64, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv9) conv9 = Conv2D(2, 3, activation = &#39;relu&#39;, padding = &#39;same&#39;, kernel_initializer = &#39;he_normal&#39;)(conv9) conv10 = Conv2D(1, 1, activation = &#39;sigmoid&#39;)(conv9) model = Model(input = inputs, output = conv10) model.compile(optimizer = Adam(lr = 1e-4), loss = &#39;binary_crossentropy&#39;, metrics = [&#39;accuracy&#39;]) #model.summary() if(pretrained_weights): model.load_weights(pretrained_weights) return model # the code is borrowed from zhixuhao https://github.com/zhixuhao Do you think I am kidding? That’s it. A bunch of convolutional, pooling and upsampling layers stacked together and a few concatenations to implement the skip connections. Dead-simple or what? Of course, we still need a lot of work to do like preprocess our input data, augment them and more importantly find them. What I mean is that gathering ground-images for our training is not an easy task at all. Just think that for every input image, we want its segmentation to find the error between them. And how can we construct the ground truth segmentations? By hand? That’s a possible way to do it. By a well- crafted script? Maybe. One thing is certain. It is not easy. Finally, I would like to mention that there are other pretty clever ways to perform semantic segmentation but most of them are built upon the FCN and U-Net. Some of them are: DeepLab which uses atrous convolutions Pyramid Scene Parsing Network Multi-path Refinement Networks Global Convolutional Networks Semantic segmentation is a very active field of research due to its high importance and emergency in real-world applications, so we expect to see a lot more papers over the next years. The combination of computer vision and deep learning is highly exciting and has given us tremendous progress in complicated tasks. Do you think that Tesla autonomous cars would have driven 1.2 billion miles by today without Deep Learning? I personally don’t think so. Let’s see what the future holds…","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png">
+  <link rel="manifest" href="/assets/img/icons/site.webmanifest">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico">
+  <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
+  <meta name="application-name" content="Sergios Karagiannakos">
+  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
+  <!-- <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77"> -->
+  <meta name="theme-color" content="#ffffff">
+
+  
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-WMXQPRS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-WMXQPRS');
+</script>
+
+
+  
+
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+</head>
+
+
+  <body class="site">
+
+    
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMXQPRS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    <!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="/"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" itemprop="url">
+                  <span itemprop="name">Home</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about" itemprop="url">
+                  <span itemprop="name">About</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/portfolio" itemprop="url">
+                  <span itemprop="name">Portfolio</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/blog" itemprop="url">
+                  <span itemprop="name">Blog</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/contact" itemprop="url">
+                  <span itemprop="name">Contact</span>
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->
+
+    
+
+  <div class="hero" style="background-image: url( //assets/img/posts/semseg.jpg">
+  
+    <div class="hero__wrap">
+      
+      <h2 class="hero__title">Semantic Segmentation in the era of Neural Networks</h2>
+      <p class="hero__meta">
+        
+        
+                
+        
+        <span class="far fa-clock"> &nbsp Jan 25, 2019</span>
+        <span>&nbsp &nbsp</span>
+        <span class="far fa-calendar">  &nbsp 
+            12 mins
+         read</span>
+      </p>
+    </div>
+  </div>
+
+  
+
+
+        
+    <div class="container">
+        <article class="post-content" itemprop="articleBody">
+
+        <h1 id="semantic-segmentation-in-the-era-of-neural-networks">Semantic Segmentation in the era of Neural Networks</h1>
+
+<p>Image segmentation is one of the fundamentals tasks in computer vision alongside
+with object recognition and detection. In semantic segmentation, the goal is to
+<strong>classify each pixel of the image in a specific category</strong>. The difference from
+image classification is that we do not classify the whole image in one class but
+each individual pixel. So, we have a set of predefined categories and we want to
+assign a label in each pixel of the image. And we do this assignment based on
+the context of the different objects in the image.</p>
+
+<p><img src="//assets/img/posts/semseg.jpg" alt="semSeg" /></p>
+
+<p>We can see a real-world example in the above image. Each pixel of the image has
+been assigned to a specific label and represented by a different color. Red for
+people, blue for cars, green for trees etc.</p>
+
+<p>It is important to mention that semantic segmentation is different from instance
+segmentation in which we distinguish labels for instances of the same class. In
+that case, the people will all had a different color.</p>
+
+<p>But we do we fraking care? (by the way, if you don’t know what frak means, go
+binge watch Battlestar Galactica. It’s awesome). Why we need this high-detailed
+processing?</p>
+
+<p>It turns out that semantic segmentation has many different applications. You can
+guess the first from the above image. Self-driving cars. Self-driving cars need
+to know what they see. And they need to know everything. Every damn pixel.
+Another popular use is of course in robotics( industrial or not). I can’t list
+many more. Geosensing, agriculture, medical image diagnostics, facial
+segmentation, fashion.</p>
+
+<p>If you are convinced, let’s see how we can approach the task. It is not that
+difficult to figure out.</p>
+
+<h2 id="deep-learning">Deep Learning</h2>
+
+<p>It is no secret that deep neural networks revolutionize computer vision and
+especially image classification. From 2012 to today, it surpasses its
+predecessors by a big margin. It is now a fact that computers are better in
+image classification than humans. Inevitably then, we used the same techniques
+for semantic segmentation too. And did they work?</p>
+
+<p>Of course, they did. Convolutional Neural Networks are now the standard in the
+industry for these kinds of problems. I am not going to bore you with a historic
+flashback of all the architectures in the field. Instead, I will present to you
+the state of the art, as it is appearing in 2019.</p>
+
+<p>But first let’s define our problem more specifically:</p>
+
+<ul>
+  <li>Each pixel of the image must be assigned to a class and colorized
+accordingly</li>
+  <li>The input and the output image should have exactly the same size</li>
+  <li>Each pixel on the input must correspond to a pixel in the exact same
+location on the output</li>
+  <li>We need pixel-level accuracy to distinguish between different classes.</li>
+</ul>
+
+<p>Taken these into consideration, let’s proceed to the architecture:</p>
+
+<h2 id="fully-convolutional-network-fcn">Fully Convolutional Network (FCN)</h2>
+
+<p>Fully Convolutional networks consist of only convolutional and pooling layers,
+without the need fully connected. The original approach was to use a stack of
+same-sized convolutional layers to map the input image to the output one.</p>
+
+<p><img src="//assets/img/posts/fcn1.jpg" alt="fcn1" /></p>
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <blockquote>
+        <blockquote>
+          <p><em>Stanford University School of Engineering</em></p>
+        </blockquote>
+      </blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>As you may imagine it produced quite good results, but it was extremely
+computationally expensive. The thing was that they couldn’t use any downsampling
+or pooling layers as it will mess up the location of the instances. And to
+maintain the image resolution, they need to add many layers to learn both
+low-level and high-level features. Thus, it ended being quite inefficient.</p>
+
+<p>To solve this problem, they proposed an encoder-decoder architecture. The
+encoder is a typical convolutional network such as AlexNet or ResNet and the
+decoder consists of deconvolutional (although I don’t like the term) and
+up-sampling layers. <strong>The goal of downsampling steps is to capture
+semantic/contextual information while the goal of upsampling is to recover
+spatial information</strong>.</p>
+
+<p><img src="//assets/img/posts/fcn2.jpg" alt="fcn2" /></p>
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <blockquote>
+        <blockquote>
+          <p><em>Stanford University School of Engineering</em></p>
+        </blockquote>
+      </blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>That way, they managed to reduce significantly the time and space complexity.
+But also, the final result. Because the encoder reduces the image resolution,
+the segmentation lacks well-defined edges, meaning that the boundaries between
+the images are not clearly defined.</p>
+
+<p>To the rescue: Skips Connections.</p>
+
+<p><strong>Skip connections bypass layers and transfer the information intact to the next
+layers</strong>. In our case, we use them to pass the information from early layers of
+the encoder to the decoder, bypassing the downsampling layers. And indeed, this
+helped improve the details of the segmentation with much more accurate shapes
+and edges.</p>
+
+<h2 id="u-net">U-Net</h2>
+
+<p>Based on the whole encoder-decoder and skip connection concept, the idea of
+Fully Convolutional Network expanded to U-net<strong>. U-net introduces symmetry in
+the FCN by increasing the size of the decoder to match the encoder and replaces
+the sum operation in skip connections with a concatenation</strong>.</p>
+
+<p>Due to the symmetry, we can transfer a lot more information from the
+downsampling layers to the upsampling ones (as there are more features maps now
+), improving that way the resolution of the final output.</p>
+
+<p><img src="//assets/img/posts/unet.jpg" alt="unet" /></p>
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <blockquote>
+        <blockquote>
+          <blockquote>
+            <blockquote>
+              <p><em>https://datascience.stackexchange.com</em></p>
+            </blockquote>
+          </blockquote>
+        </blockquote>
+      </blockquote>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>U-nets have originally developed for biomedical image segmentation, but they
+also used in a wide of different applications with many variations such as the
+addition of fully connected layers or residual blocks.</p>
+
+<p>To fully grasp the U-net idea, let’s write some code to realize how dead-simple
+it is. We are going to use python and keras framework to simplify thing even
+more.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">unet</span><span class="p">(</span><span class="n">pretrained_weights</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span><span class="n">input_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">256</span><span class="p">,</span><span class="mi">256</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+  
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">input_size</span><span class="p">)</span>
+    <span class="n">conv1</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="n">conv1</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv1</span><span class="p">)</span>
+    <span class="n">pool1</span> <span class="o">=</span> <span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))(</span><span class="n">conv1</span><span class="p">)</span>
+    <span class="n">conv2</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">pool1</span><span class="p">)</span>
+    <span class="n">conv2</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv2</span><span class="p">)</span>
+    <span class="n">pool2</span> <span class="o">=</span> <span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))(</span><span class="n">conv2</span><span class="p">)</span>
+    <span class="n">conv3</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">pool2</span><span class="p">)</span>
+    <span class="n">conv3</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv3</span><span class="p">)</span>
+    <span class="n">pool3</span> <span class="o">=</span> <span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))(</span><span class="n">conv3</span><span class="p">)</span>
+    <span class="n">conv4</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">pool3</span><span class="p">)</span>
+    <span class="n">conv4</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv4</span><span class="p">)</span>
+    <span class="n">drop4</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)(</span><span class="n">conv4</span><span class="p">)</span>
+    <span class="n">pool4</span> <span class="o">=</span> <span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))(</span><span class="n">drop4</span><span class="p">)</span>
+
+    <span class="n">conv5</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">pool4</span><span class="p">)</span>
+    <span class="n">conv5</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv5</span><span class="p">)</span>
+    <span class="n">drop5</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)(</span><span class="n">conv5</span><span class="p">)</span>
+
+    <span class="n">up6</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">UpSampling2D</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))(</span><span class="n">drop5</span><span class="p">))</span>
+    <span class="n">merge6</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">drop4</span><span class="p">,</span><span class="n">up6</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">conv6</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">merge6</span><span class="p">)</span>
+    <span class="n">conv6</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv6</span><span class="p">)</span>
+
+    <span class="n">up7</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">UpSampling2D</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))(</span><span class="n">conv6</span><span class="p">))</span>
+    <span class="n">merge7</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">conv3</span><span class="p">,</span><span class="n">up7</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">conv7</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">merge7</span><span class="p">)</span>
+    <span class="n">conv7</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv7</span><span class="p">)</span>
+
+    <span class="n">up8</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">UpSampling2D</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))(</span><span class="n">conv7</span><span class="p">))</span>
+    <span class="n">merge8</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">conv2</span><span class="p">,</span><span class="n">up8</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">conv8</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">merge8</span><span class="p">)</span>
+    <span class="n">conv8</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv8</span><span class="p">)</span>
+
+    <span class="n">up9</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">UpSampling2D</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))(</span><span class="n">conv8</span><span class="p">))</span>
+    <span class="n">merge9</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">conv1</span><span class="p">,</span><span class="n">up9</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">conv9</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">merge9</span><span class="p">)</span>
+    <span class="n">conv9</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv9</span><span class="p">)</span>
+    <span class="n">conv9</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'relu'</span><span class="p">,</span> <span class="n">padding</span> <span class="o">=</span> <span class="s">'same'</span><span class="p">,</span> <span class="n">kernel_initializer</span> <span class="o">=</span> <span class="s">'he_normal'</span><span class="p">)(</span><span class="n">conv9</span><span class="p">)</span>
+    <span class="n">conv10</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s">'sigmoid'</span><span class="p">)(</span><span class="n">conv9</span><span class="p">)</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="nb">input</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="n">conv10</span><span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="nb">compile</span><span class="p">(</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">(</span><span class="n">lr</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">),</span> <span class="n">loss</span> <span class="o">=</span> <span class="s">'binary_crossentropy'</span><span class="p">,</span> <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s">'accuracy'</span><span class="p">])</span>
+    
+    <span class="c1">#model.summary()
+</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">pretrained_weights</span><span class="p">):</span>
+    	<span class="n">model</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">pretrained_weights</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span>
+
+<span class="c1"># the code is borrowed from zhixuhao https://github.com/zhixuhao
+</span>
+</code></pre></div></div>
+<p>Do you think I am kidding? That’s it. A bunch of convolutional, pooling and
+upsampling layers stacked together and a few concatenations to implement the
+skip connections. Dead-simple or what?</p>
+
+<p>Of course, we still need a lot of work to do like preprocess our input data,
+augment them and more importantly find them. What I mean is that gathering
+ground-images for our training is not an easy task at all. Just think that for
+every input image, we want its segmentation to find the error between them. And
+how can we construct the ground truth segmentations? By hand? That’s a possible
+way to do it. By a well- crafted script? Maybe. One thing is certain. It is not
+easy.</p>
+
+<p>Finally, I would like to mention that there are other pretty clever ways to
+perform semantic segmentation but most of them are built upon the FCN and U-Net.
+Some of them are:</p>
+
+<ul>
+  <li><a href="https://ai.googleblog.com/2018/03/semantic-image-segmentation-with.html">DeepLab</a>
+which uses atrous convolutions</li>
+  <li><a href="https://arxiv.org/abs/1612.01105">Pyramid Scene Parsing Network</a></li>
+  <li><a href="https://arxiv.org/abs/1611.06612">Multi-path Refinement Networks</a></li>
+  <li><a href="https://arxiv.org/pdf/1703.02719.pdf">Global Convolutional Networks</a></li>
+</ul>
+
+<p>Semantic segmentation is a very active field of research due to its high
+importance and emergency in real-world applications, so we expect to see a lot
+more papers over the next years. The combination of computer vision and deep
+learning is highly exciting and has given us tremendous progress in complicated
+tasks. Do you think that Tesla autonomous cars would have driven 1.2 billion
+miles by today without Deep Learning? I personally don’t think so. Let’s see
+what the future holds…</p>
+
+
+        </article>
+        <div class="post-content controls__inner">
+        <div class="controls__item prev">
+            
+
+            <span>Previous</span>
+            <a href="/TRPO_PPO/">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="fillColor" d="M5.647 1.718c.37-.434.323-1.09-.106-1.465A1.016 1.016 0 0 0 4.095.36L.25 4.875a1.05 1.05 0 0 0 .017 1.378l3.95 4.407c.38.424 1.03.456 1.448.07a1.05 1.05 0 0 0 .07-1.468l-3.34-3.725 3.253-3.819z"/>
+                    </svg>
+                </span>
+            Trust Region and Proximal p...
+            </a>
+            
+        </div>
+
+        <div class="controls__item next">
+            
+            <span>Next</span>
+            <a href="/Localization_and_Object_Detection/">
+            Localization and Object Det...
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="#fillColor" d="M.353 9.282c-.37.434-.323 1.09.106 1.465a1.016 1.016 0 0 0 1.446-.107L5.75 6.125a1.05 1.05 0 0 0-.017-1.378L1.784.34A1.015 1.015 0 0 0 .336.27a1.05 1.05 0 0 0-.07 1.468l3.34 3.725L.353 9.282z"/>
+                </svg>
+                </span>
+            </a>
+            
+        </div>
+        </div>
+    </div>
+
+
+  
+
+
+    
+
+<section class="paralax-mf footer-paralax bg-image " >
+<footer class="site-footer">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-md-12 text-center">
+        <p>
+          <a href="https://www.linkedin.com/in/sergios-karagiannakos " class="social-item"><span class="fab fa-linkedin"></span></a>
+          <a href="https://www.instagram.com/sergios_krg" class="social-item"><span class="fab fa-instagram"></span></a>
+          <a href="https://www.twitter.com/karsergios" class="social-item"><span class="fab fa-twitter"></span></a>
+          <a href="https://www.facebook.com/sergios.karagiannakos" class="social-item"><span class="fab fa-facebook"></span></a>
+          <a href="https://github.com/SergiosKar" class="social-item"><span class="fab fa-github"></span></a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+        <p class="col-12 text-center footer_text">
+        <span>&copy; 2019 Sergios Karagiannakos. All rights reserved.</span>
+        </p>
+    </div>
+  </div>
+</footer>
+</section>
+<!-- JS -->
+ <!-- JavaScript Libraries -->
+ <script src="//lib/jquery/jquery.min.js"></script>
+ <script src="//lib/jquery/jquery-migrate.min.js"></script>
+ <script src="//lib/popper/popper.min.js"></script>
+ <script src="//lib/bootstrap/js/bootstrap.min.js"></script>
+ <script src="//lib/easing/easing.min.js"></script>
+ <script src="//lib/counterup/jquery.waypoints.min.js"></script>
+ <script src="//lib/counterup/jquery.counterup.js"></script>
+ <script src="//lib/lightbox/js/lightbox.min.js"></script>
+ <script src="//lib/typed/typed.min.js"></script>
+ <script src="//js/scripts.js"></script>
+ <script src="//js/contact_form.js"></script>
+
+
+
+  </body>
+
+</html>
+
+
+

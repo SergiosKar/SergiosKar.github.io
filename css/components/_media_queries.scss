@@ -1,0 +1,93 @@
+
+  @media (min-width: 577px) {
+    .counter-box {
+      margin-bottom: 1.8rem;
+    }
+  }
+  
+  @media (min-width: 767px) {
+    .about-mf .box-pl2 {
+      margin-top: 3rem;
+      padding-left: 0rem;
+    }
+  
+    .card-blog {
+      margin-bottom: 3rem;
+    }
+  
+    .contact-mf .box-pl2 {
+      margin-top: 3rem;
+      padding-left: 0rem;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .box-shadow-full {
+      padding: 3rem;
+    }
+  
+    .navbar-b.navbar-trans .nav-item,
+    .navbar-b.navbar-reduce .nav-item {
+      padding-left: 10px;
+    }
+  
+    .navbar-b.navbar-trans .nav-link:before,
+    .navbar-b.navbar-reduce .nav-link:before {
+      margin-left: 18px;
+    }
+  
+    .intro .intro-title {
+      font-size: 4.5rem;
+    }
+  
+    .intro .intro-subtitle {
+      font-size: 2.5rem;
+    }
+  
+    .intro-single .intro-title {
+      font-size: 3.5rem;
+    }
+  
+    .testimonial-box .description {
+      padding: 0 5rem;
+    }
+  
+    .post-box,
+    .form-comments,
+    .box-comments,
+    .widget-sidebar {
+      padding: 3rem;
+    }
+  
+    .blog-wrapper .article-title {
+      font-size: 1.9rem;
+    }
+  
+    .box-comments .list-comments .comment-author {
+      font-size: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 992px) {
+    .testimonial-box .description {
+      padding: 0 8rem;
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .testimonial-box .description {
+      padding: 0 13rem;
+    }
+  }
+  
+  @media (max-width: 1024px) {
+    .bg-image {
+      background-attachment: scroll;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .back-to-top {
+      bottom: 15px;
+    }
+  }

@@ -1,0 +1,380 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Explain Neural Arithmetic Logic Units (NALU) | Sergios Karagiannakos</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Explain Neural Arithmetic Logic Units (NALU)" />
+<meta name="author" content="Sergios Karagiannakos" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Explain Neural Arithmetic Logic Units (NALU) So Deepmind released a new paper a few days ago with the title Neural Arithmetic Logic Units. After the victory of AlphaGo against the top Go player in the world, every new paper from DeepMind comes with an excitement in the AI community. But this time all that fuzz is totally worth it. Alright, then what is NALU and what is its purpose? Neural Networks have proven to have the uncanny ability to learn complex functions from any kind of data, whether it is numbers, images or sound. But they have a significant flaw: they can’t count. What I mean by is that they can’t output values outside the range of training data. For example, if we have a training set with range from 0 to 100, the output will also be between that same range. It does not matter which activation function or what optimization technique we use ,the output will always be inside that range. So, if we want to build a counter with a neural network, we can’t pass it the following data [0,1,2,3,4,5] and expect to output 6. Below is an interesting graph what shows exactly that: MLPs learn the identity function only for the range values they are trained on. The mean error ramps up severely both below and above the range of numbers seen during training. Credit: Trask et al. You could argue that this is a somewhat significant limitation of deep learning and I agree with you. Here is where NALU come in place. NALU use a careful combination of gates and extend the Neural Accumulator model (NAC). NAC is in fact a linear transformation and can accumulate inputs additively. NALU extends the addition and subtraction functionality of NACs and can represent multiplications and divisions. It consists of two NAC cells (one for addition and one for multiplication) interpolated by a learned sigmoidal gate. Clearly it is not very easy to explain why the gates have this particular structure because it is a result of complex mathematical principles and tools. Cudos to the researchers. However, what is important is that those units can now use in any known model from convolutional networks to autoencoders and enhance their capabilities. Examples of practical applications that already have examined by the authors and provide rally promising results are: Learn Simple Arithmetic functions Count how many hand-written characters appear on an image Translate text-number expressions to numeric values Track Time in a Grid-World Environment For more info about the above, please read the paper. And you should because we are talking about some exciting stuff. Let’s now try to build a NALU using Tensorflow and Python and test for ourselves how well they work. We have the equations, we have a nice graphic representation. It shouldn’t be that difficult. Right? And it really isn’t. If we follow the mathematical expressions appeared above we have: import tensorflow as tf def NALU(prev_layer, num_outputs): eps=1e-7 shape = (int(prev_layer.shape[-1]),num_outputs) # NAC cell W_hat = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) M_hat = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) W = tf.tanh(W_hat) * tf.sigmoid(M_hat) a = tf.matmul(prev_layer, W) G = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) # NALU m = tf.exp(tf.matmul(tf.log(tf.abs(prev_layer) + eps), W)) g = tf.sigmoid(tf.matmul(prev_layer, G)) out = g * a + (1 - g) * m return out Well thats it! Now let’s construct a simple neural network exclusively by NALU’s and use it to learn a simple mathematical function. First lets build some dummy data to train and test our model: arithmetic_functions={ &#39;add&#39;: lambda x,y :x+y, } def get_data(N, op): split = 4 X_train = np.random.rand(N, 10)*10 #to be mutually exclusive a = X_train[:, :split].sum(1) b = X_train[:, split:].sum(1) Y_train = op(a, b)[:, None] print(X_train.shape) print(Y_train.shape) X_test = np.random.rand(N, 10)*100 #to be mutually exclusive a = X_test[:, :split].sum(1) b = X_test[:, split:].sum(1) Y_test = op(a, b)[:, None] print(X_test.shape) print(Y_test.shape) return (X_train,Y_train),(X_test,Y_test) Notice that the test set has a much bigger range than the train set. The purpose of that diffrenece is to test how well the model can extrapolate. Now we have to create the tensorflow session an run the backpropagation algorithm. tf.reset_default_graph() train_examples=10000 (X_train,Y_train),(X_test,Y_test)=get_data(train_examples,arithmetic_functions[&#39;add&#39;]) X = tf.placeholder(tf.float32, shape=[train_examples, 10]) Y = tf.placeholder(tf.float32, shape=[train_examples, 1]) X_1=NALU(X,2) Y_pred=NALU(X_1,1) loss = tf.nn.l2_loss(Y_pred - Y) # NALU uses mse optimizer = tf.train.AdamOptimizer(0.1) train_op = optimizer.minimize(loss) with tf.Session() as session: session.run(tf.global_variables_initializer()) for ep in range(50000): _,pred,l = session.run([train_op, Y_pred, loss], feed_dict={X: X_train, Y: Y_train}) if ep % 1000 == 0: print(&#39;epoch {0}, loss: {1}&#39;.format(ep,l)) _,test_predictions,test_loss = session.run([train_op, Y_pred,loss],feed_dict={X:X_test,Y:Y_test}) print(test_loss) #8.575397e-05 The loss(the mean square error) on test set turns out to be 8.575397e-05. Amazing! Its practically zero. Note that the test data had a different range of the training data, thus we can conclude the extrapolation of F(x,y)=x+y is almost perfect. We can,of course, test that in other simple functions. The results will be similarly good. It is clear that the applications of Neural Arithmetic Logic Units are practically endless ,as they can be used in literally every existing model to improve its performance and extend their capabilities beyond the range of the training data." />
+<meta property="og:description" content="Explain Neural Arithmetic Logic Units (NALU) So Deepmind released a new paper a few days ago with the title Neural Arithmetic Logic Units. After the victory of AlphaGo against the top Go player in the world, every new paper from DeepMind comes with an excitement in the AI community. But this time all that fuzz is totally worth it. Alright, then what is NALU and what is its purpose? Neural Networks have proven to have the uncanny ability to learn complex functions from any kind of data, whether it is numbers, images or sound. But they have a significant flaw: they can’t count. What I mean by is that they can’t output values outside the range of training data. For example, if we have a training set with range from 0 to 100, the output will also be between that same range. It does not matter which activation function or what optimization technique we use ,the output will always be inside that range. So, if we want to build a counter with a neural network, we can’t pass it the following data [0,1,2,3,4,5] and expect to output 6. Below is an interesting graph what shows exactly that: MLPs learn the identity function only for the range values they are trained on. The mean error ramps up severely both below and above the range of numbers seen during training. Credit: Trask et al. You could argue that this is a somewhat significant limitation of deep learning and I agree with you. Here is where NALU come in place. NALU use a careful combination of gates and extend the Neural Accumulator model (NAC). NAC is in fact a linear transformation and can accumulate inputs additively. NALU extends the addition and subtraction functionality of NACs and can represent multiplications and divisions. It consists of two NAC cells (one for addition and one for multiplication) interpolated by a learned sigmoidal gate. Clearly it is not very easy to explain why the gates have this particular structure because it is a result of complex mathematical principles and tools. Cudos to the researchers. However, what is important is that those units can now use in any known model from convolutional networks to autoencoders and enhance their capabilities. Examples of practical applications that already have examined by the authors and provide rally promising results are: Learn Simple Arithmetic functions Count how many hand-written characters appear on an image Translate text-number expressions to numeric values Track Time in a Grid-World Environment For more info about the above, please read the paper. And you should because we are talking about some exciting stuff. Let’s now try to build a NALU using Tensorflow and Python and test for ourselves how well they work. We have the equations, we have a nice graphic representation. It shouldn’t be that difficult. Right? And it really isn’t. If we follow the mathematical expressions appeared above we have: import tensorflow as tf def NALU(prev_layer, num_outputs): eps=1e-7 shape = (int(prev_layer.shape[-1]),num_outputs) # NAC cell W_hat = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) M_hat = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) W = tf.tanh(W_hat) * tf.sigmoid(M_hat) a = tf.matmul(prev_layer, W) G = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) # NALU m = tf.exp(tf.matmul(tf.log(tf.abs(prev_layer) + eps), W)) g = tf.sigmoid(tf.matmul(prev_layer, G)) out = g * a + (1 - g) * m return out Well thats it! Now let’s construct a simple neural network exclusively by NALU’s and use it to learn a simple mathematical function. First lets build some dummy data to train and test our model: arithmetic_functions={ &#39;add&#39;: lambda x,y :x+y, } def get_data(N, op): split = 4 X_train = np.random.rand(N, 10)*10 #to be mutually exclusive a = X_train[:, :split].sum(1) b = X_train[:, split:].sum(1) Y_train = op(a, b)[:, None] print(X_train.shape) print(Y_train.shape) X_test = np.random.rand(N, 10)*100 #to be mutually exclusive a = X_test[:, :split].sum(1) b = X_test[:, split:].sum(1) Y_test = op(a, b)[:, None] print(X_test.shape) print(Y_test.shape) return (X_train,Y_train),(X_test,Y_test) Notice that the test set has a much bigger range than the train set. The purpose of that diffrenece is to test how well the model can extrapolate. Now we have to create the tensorflow session an run the backpropagation algorithm. tf.reset_default_graph() train_examples=10000 (X_train,Y_train),(X_test,Y_test)=get_data(train_examples,arithmetic_functions[&#39;add&#39;]) X = tf.placeholder(tf.float32, shape=[train_examples, 10]) Y = tf.placeholder(tf.float32, shape=[train_examples, 1]) X_1=NALU(X,2) Y_pred=NALU(X_1,1) loss = tf.nn.l2_loss(Y_pred - Y) # NALU uses mse optimizer = tf.train.AdamOptimizer(0.1) train_op = optimizer.minimize(loss) with tf.Session() as session: session.run(tf.global_variables_initializer()) for ep in range(50000): _,pred,l = session.run([train_op, Y_pred, loss], feed_dict={X: X_train, Y: Y_train}) if ep % 1000 == 0: print(&#39;epoch {0}, loss: {1}&#39;.format(ep,l)) _,test_predictions,test_loss = session.run([train_op, Y_pred,loss],feed_dict={X:X_test,Y:Y_test}) print(test_loss) #8.575397e-05 The loss(the mean square error) on test set turns out to be 8.575397e-05. Amazing! Its practically zero. Note that the test data had a different range of the training data, thus we can conclude the extrapolation of F(x,y)=x+y is almost perfect. We can,of course, test that in other simple functions. The results will be similarly good. It is clear that the applications of Neural Arithmetic Logic Units are practically endless ,as they can be used in literally every existing model to improve its performance and extend their capabilities beyond the range of the training data." />
+<link rel="canonical" href="//nalu/" />
+<meta property="og:url" content="//nalu/" />
+<meta property="og:site_name" content="Sergios Karagiannakos" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-08-15T00:00:00+03:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","url":"//nalu/","headline":"Explain Neural Arithmetic Logic Units (NALU)","dateModified":"2018-08-15T00:00:00+03:00","datePublished":"2018-08-15T00:00:00+03:00","mainEntityOfPage":{"@type":"WebPage","@id":"//nalu/"},"author":{"@type":"Person","name":"Sergios Karagiannakos"},"description":"Explain Neural Arithmetic Logic Units (NALU) So Deepmind released a new paper a few days ago with the title Neural Arithmetic Logic Units. After the victory of AlphaGo against the top Go player in the world, every new paper from DeepMind comes with an excitement in the AI community. But this time all that fuzz is totally worth it. Alright, then what is NALU and what is its purpose? Neural Networks have proven to have the uncanny ability to learn complex functions from any kind of data, whether it is numbers, images or sound. But they have a significant flaw: they can’t count. What I mean by is that they can’t output values outside the range of training data. For example, if we have a training set with range from 0 to 100, the output will also be between that same range. It does not matter which activation function or what optimization technique we use ,the output will always be inside that range. So, if we want to build a counter with a neural network, we can’t pass it the following data [0,1,2,3,4,5] and expect to output 6. Below is an interesting graph what shows exactly that: MLPs learn the identity function only for the range values they are trained on. The mean error ramps up severely both below and above the range of numbers seen during training. Credit: Trask et al. You could argue that this is a somewhat significant limitation of deep learning and I agree with you. Here is where NALU come in place. NALU use a careful combination of gates and extend the Neural Accumulator model (NAC). NAC is in fact a linear transformation and can accumulate inputs additively. NALU extends the addition and subtraction functionality of NACs and can represent multiplications and divisions. It consists of two NAC cells (one for addition and one for multiplication) interpolated by a learned sigmoidal gate. Clearly it is not very easy to explain why the gates have this particular structure because it is a result of complex mathematical principles and tools. Cudos to the researchers. However, what is important is that those units can now use in any known model from convolutional networks to autoencoders and enhance their capabilities. Examples of practical applications that already have examined by the authors and provide rally promising results are: Learn Simple Arithmetic functions Count how many hand-written characters appear on an image Translate text-number expressions to numeric values Track Time in a Grid-World Environment For more info about the above, please read the paper. And you should because we are talking about some exciting stuff. Let’s now try to build a NALU using Tensorflow and Python and test for ourselves how well they work. We have the equations, we have a nice graphic representation. It shouldn’t be that difficult. Right? And it really isn’t. If we follow the mathematical expressions appeared above we have: import tensorflow as tf def NALU(prev_layer, num_outputs): eps=1e-7 shape = (int(prev_layer.shape[-1]),num_outputs) # NAC cell W_hat = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) M_hat = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) W = tf.tanh(W_hat) * tf.sigmoid(M_hat) a = tf.matmul(prev_layer, W) G = tf.Variable(tf.truncated_normal(shape, stddev=0.02)) # NALU m = tf.exp(tf.matmul(tf.log(tf.abs(prev_layer) + eps), W)) g = tf.sigmoid(tf.matmul(prev_layer, G)) out = g * a + (1 - g) * m return out Well thats it! Now let’s construct a simple neural network exclusively by NALU’s and use it to learn a simple mathematical function. First lets build some dummy data to train and test our model: arithmetic_functions={ &#39;add&#39;: lambda x,y :x+y, } def get_data(N, op): split = 4 X_train = np.random.rand(N, 10)*10 #to be mutually exclusive a = X_train[:, :split].sum(1) b = X_train[:, split:].sum(1) Y_train = op(a, b)[:, None] print(X_train.shape) print(Y_train.shape) X_test = np.random.rand(N, 10)*100 #to be mutually exclusive a = X_test[:, :split].sum(1) b = X_test[:, split:].sum(1) Y_test = op(a, b)[:, None] print(X_test.shape) print(Y_test.shape) return (X_train,Y_train),(X_test,Y_test) Notice that the test set has a much bigger range than the train set. The purpose of that diffrenece is to test how well the model can extrapolate. Now we have to create the tensorflow session an run the backpropagation algorithm. tf.reset_default_graph() train_examples=10000 (X_train,Y_train),(X_test,Y_test)=get_data(train_examples,arithmetic_functions[&#39;add&#39;]) X = tf.placeholder(tf.float32, shape=[train_examples, 10]) Y = tf.placeholder(tf.float32, shape=[train_examples, 1]) X_1=NALU(X,2) Y_pred=NALU(X_1,1) loss = tf.nn.l2_loss(Y_pred - Y) # NALU uses mse optimizer = tf.train.AdamOptimizer(0.1) train_op = optimizer.minimize(loss) with tf.Session() as session: session.run(tf.global_variables_initializer()) for ep in range(50000): _,pred,l = session.run([train_op, Y_pred, loss], feed_dict={X: X_train, Y: Y_train}) if ep % 1000 == 0: print(&#39;epoch {0}, loss: {1}&#39;.format(ep,l)) _,test_predictions,test_loss = session.run([train_op, Y_pred,loss],feed_dict={X:X_test,Y:Y_test}) print(test_loss) #8.575397e-05 The loss(the mean square error) on test set turns out to be 8.575397e-05. Amazing! Its practically zero. Note that the test data had a different range of the training data, thus we can conclude the extrapolation of F(x,y)=x+y is almost perfect. We can,of course, test that in other simple functions. The results will be similarly good. It is clear that the applications of Neural Arithmetic Logic Units are practically endless ,as they can be used in literally every existing model to improve its performance and extend their capabilities beyond the range of the training data.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png">
+  <link rel="manifest" href="/assets/img/icons/site.webmanifest">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico">
+  <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
+  <meta name="application-name" content="Sergios Karagiannakos">
+  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
+  <!-- <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77"> -->
+  <meta name="theme-color" content="#ffffff">
+
+  
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-WMXQPRS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-WMXQPRS');
+</script>
+
+
+  
+
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+</head>
+
+
+  <body class="site">
+
+    
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMXQPRS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    <!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="/"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" itemprop="url">
+                  <span itemprop="name">Home</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about" itemprop="url">
+                  <span itemprop="name">About</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/portfolio" itemprop="url">
+                  <span itemprop="name">Portfolio</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/blog" itemprop="url">
+                  <span itemprop="name">Blog</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/contact" itemprop="url">
+                  <span itemprop="name">Contact</span>
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->
+
+    
+
+  <div class="hero" style="background-image: url( //assets/img/posts/NALU_img.jpg">
+  
+    <div class="hero__wrap">
+      
+      <h2 class="hero__title">Explain Neural Arithmetic Logic Units (NALU)</h2>
+      <p class="hero__meta">
+        
+        
+                
+        
+        <span class="far fa-clock"> &nbsp Aug 15, 2018</span>
+        <span>&nbsp &nbsp</span>
+        <span class="far fa-calendar">  &nbsp 
+            7 mins
+         read</span>
+      </p>
+    </div>
+  </div>
+
+  
+
+
+        
+    <div class="container">
+        <article class="post-content" itemprop="articleBody">
+
+        <h1 id="explain-neural-arithmetic-logic-units-nalu">Explain Neural Arithmetic Logic Units (NALU)</h1>
+
+<p>So Deepmind released a new <a href="https://arxiv.org/pdf/1808.00508.pdf">paper</a> a few
+days ago with the title Neural Arithmetic Logic Units. After the victory of
+AlphaGo against the top Go player in the world, every new paper from DeepMind
+comes with an excitement in the AI community. But this time all that fuzz is
+totally worth it. Alright, then what is NALU and what is its purpose?</p>
+
+<p>Neural Networks have proven to have the uncanny ability to learn complex
+functions from any kind of data, whether it is numbers, images or sound. But
+they have a significant flaw: they can’t count. What I mean by is that they can’t
+output values outside the range of training data. For example, if we have a
+training set with range from 0 to 100, the output will also be between that same
+range. It does not matter which activation function or what optimization
+technique we use ,the output will always be inside that range. So, if we want to
+build a counter with a neural network, we can’t pass it the following data
+[0,1,2,3,4,5] and expect to output 6. Below is an interesting graph what shows
+exactly that:</p>
+
+<p><img src="//assets/img/posts/nn_range.jpg" alt="DeepMind researchers develop neural arithmetic logic units (NALU)" /></p>
+
+<p><em>MLPs learn the identity function only for the range values they are trained on.
+ The mean error ramps up severely both below and above the range of numbers seen
+ during training. Credit: Trask et al.</em></p>
+
+<p>You could argue that this is a somewhat significant limitation of deep learning
+and I agree with you. Here is where NALU come in place. NALU use a careful
+combination of gates and extend the Neural Accumulator model (NAC). NAC is in
+fact a linear transformation and can accumulate inputs additively.</p>
+
+<p><img src="//assets/img/posts/NAC.jpg" alt="Image result for Neural Accumulator" /></p>
+
+<p>NALU extends the addition and subtraction functionality of NACs and can
+represent multiplications and divisions. It consists of two NAC cells (one for
+addition and one for multiplication) interpolated by a learned sigmoidal gate.</p>
+
+<p><img src="//assets/img/posts/NALU_img.jpg" alt="Image result for Neural Arithmetic Logic Unit" /></p>
+
+<p><img src="//assets/img/posts/NALU_equat.jpg" alt="NALU equations" /></p>
+
+<p>Clearly it is not very easy to explain why the gates have this particular
+structure because it is a result of complex mathematical principles and tools.
+Cudos to the researchers. However, what is important is that those units can now
+use in any known model from convolutional networks to autoencoders and enhance
+their capabilities. Examples of practical applications that already have
+examined by the authors and provide rally promising results are:</p>
+
+<ul>
+  <li>Learn Simple Arithmetic functions</li>
+  <li>Count how many hand-written characters appear on an image</li>
+  <li>Translate text-number expressions to numeric values</li>
+  <li>Track Time in a Grid-World Environment</li>
+</ul>
+
+<p>For more info about the above, please read the paper. And you should because we
+are talking about some exciting stuff.</p>
+
+<p>Let’s now try to build a NALU using Tensorflow and Python and test for ourselves how well they work. We have the equations, we have a nice graphic representation. It shouldn’t be that difficult.
+Right? And it really isn’t.</p>
+
+<p>If we follow the mathematical expressions appeared above we have:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
+
+<span class="k">def</span> <span class="nf">NALU</span><span class="p">(</span><span class="n">prev_layer</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">):</span>
+    <span class="n">eps</span><span class="o">=</span><span class="mf">1e-7</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">prev_layer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span><span class="n">num_outputs</span><span class="p">)</span>
+
+    <span class="c1"># NAC cell
+</span>    <span class="n">W_hat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">0.02</span><span class="p">))</span>
+    <span class="n">M_hat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">0.02</span><span class="p">))</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">W_hat</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">M_hat</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">prev_layer</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">0.02</span><span class="p">))</span>
+    
+    <span class="c1"># NALU
+</span>    <span class="n">m</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">prev_layer</span><span class="p">)</span> <span class="o">+</span> <span class="n">eps</span><span class="p">),</span> <span class="n">W</span><span class="p">))</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">prev_layer</span><span class="p">,</span> <span class="n">G</span><span class="p">))</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">a</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">g</span><span class="p">)</span> <span class="o">*</span> <span class="n">m</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+</code></pre></div></div>
+<p>Well thats it! Now let’s construct a simple neural network exclusively by NALU’s and use it to learn a simple mathematical function. First lets build some dummy data to train and test our model:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">arithmetic_functions</span><span class="o">=</span><span class="p">{</span>
+<span class="s">'add'</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="p">:</span><span class="n">x</span><span class="o">+</span><span class="n">y</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+    <span class="n">split</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span><span class="o">*</span><span class="mi">10</span>
+    <span class="c1">#to be mutually exclusive
+</span>    <span class="n">a</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[:,</span> <span class="p">:</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[:,</span> <span class="n">split</span><span class="p">:]</span><span class="o">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">Y_train</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)[:,</span> <span class="bp">None</span><span class="p">]</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">Y_train</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    
+    <span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span>
+    <span class="c1">#to be mutually exclusive
+</span>    <span class="n">a</span> <span class="o">=</span> <span class="n">X_test</span><span class="p">[:,</span> <span class="p">:</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">X_test</span><span class="p">[:,</span> <span class="n">split</span><span class="p">:]</span><span class="o">.</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">Y_test</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)[:,</span> <span class="bp">None</span><span class="p">]</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">Y_test</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="p">(</span><span class="n">X_train</span><span class="p">,</span><span class="n">Y_train</span><span class="p">),(</span><span class="n">X_test</span><span class="p">,</span><span class="n">Y_test</span><span class="p">)</span>
+  
+</code></pre></div></div>
+<p>Notice that the test set has a much bigger range than the train set. The purpose of that diffrenece is to test how well the model can extrapolate. Now we have to create the tensorflow session an run the backpropagation algorithm.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    <span class="n">tf</span><span class="o">.</span><span class="n">reset_default_graph</span><span class="p">()</span>
+    <span class="n">train_examples</span><span class="o">=</span><span class="mi">10000</span>
+
+    <span class="p">(</span><span class="n">X_train</span><span class="p">,</span><span class="n">Y_train</span><span class="p">),(</span><span class="n">X_test</span><span class="p">,</span><span class="n">Y_test</span><span class="p">)</span><span class="o">=</span><span class="n">get_data</span><span class="p">(</span><span class="n">train_examples</span><span class="p">,</span><span class="n">arithmetic_functions</span><span class="p">[</span><span class="s">'add'</span><span class="p">])</span>  
+    <span class="n">X</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">train_examples</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">train_examples</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">X_1</span><span class="o">=</span><span class="n">NALU</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">Y_pred</span><span class="o">=</span><span class="n">NALU</span><span class="p">(</span><span class="n">X_1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">l2_loss</span><span class="p">(</span><span class="n">Y_pred</span> <span class="o">-</span> <span class="n">Y</span><span class="p">)</span> <span class="c1"># NALU uses mse
+</span>    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="n">train_op</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+            
+        <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">global_variables_initializer</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50000</span><span class="p">):</span>
+            <span class="n">_</span><span class="p">,</span><span class="n">pred</span><span class="p">,</span><span class="n">l</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">train_op</span><span class="p">,</span> <span class="n">Y_pred</span><span class="p">,</span> <span class="n">loss</span><span class="p">],</span> 
+                    <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">X</span><span class="p">:</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Y_train</span><span class="p">})</span>
+            <span class="k">if</span> <span class="n">ep</span> <span class="o">%</span> <span class="mi">1000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">'epoch {0}, loss: {1}'</span><span class="o">.</span><span class="nb">format</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span><span class="n">l</span><span class="p">))</span>
+
+        <span class="n">_</span><span class="p">,</span><span class="n">test_predictions</span><span class="p">,</span><span class="n">test_loss</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">train_op</span><span class="p">,</span> <span class="n">Y_pred</span><span class="p">,</span><span class="n">loss</span><span class="p">],</span><span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">X</span><span class="p">:</span><span class="n">X_test</span><span class="p">,</span><span class="n">Y</span><span class="p">:</span><span class="n">Y_test</span><span class="p">})</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="n">test_loss</span><span class="p">)</span> <span class="c1">#8.575397e-05
+</span></code></pre></div></div>
+
+<p>The loss(the mean square error) on test set turns out to be 8.575397e-05. Amazing! Its practically zero. Note that the test data had a different range of the training data, thus we can conclude the extrapolation of F(x,y)=x+y is almost perfect. We can,of course, test that in other simple functions. The results will be similarly good.</p>
+
+<p>It is clear that the applications of Neural Arithmetic Logic Units are practically endless ,as they can be used in literally every existing model to improve its performance and extend their capabilities beyond the range of the training data.</p>
+
+
+
+        </article>
+        <div class="post-content controls__inner">
+        <div class="controls__item prev">
+            
+
+            <span>Previous</span>
+            <a href="/Deep_learning/">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="fillColor" d="M5.647 1.718c.37-.434.323-1.09-.106-1.465A1.016 1.016 0 0 0 4.095.36L.25 4.875a1.05 1.05 0 0 0 .017 1.378l3.95 4.407c.38.424 1.03.456 1.448.07a1.05 1.05 0 0 0 .07-1.468l-3.34-3.725 3.253-3.819z"/>
+                    </svg>
+                </span>
+            Deep Learning- The future o...
+            </a>
+            
+        </div>
+
+        <div class="controls__item next">
+            
+            <span>Next</span>
+            <a href="/Bitcon_prediction_LSTM/">
+            Predict Bitcoin price with ...
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="#fillColor" d="M.353 9.282c-.37.434-.323 1.09.106 1.465a1.016 1.016 0 0 0 1.446-.107L5.75 6.125a1.05 1.05 0 0 0-.017-1.378L1.784.34A1.015 1.015 0 0 0 .336.27a1.05 1.05 0 0 0-.07 1.468l3.34 3.725L.353 9.282z"/>
+                </svg>
+                </span>
+            </a>
+            
+        </div>
+        </div>
+    </div>
+
+
+  
+
+
+    
+
+<section class="paralax-mf footer-paralax bg-image " >
+<footer class="site-footer">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-md-12 text-center">
+        <p>
+          <a href="https://www.linkedin.com/in/sergios-karagiannakos " class="social-item"><span class="fab fa-linkedin"></span></a>
+          <a href="https://www.instagram.com/sergios_krg" class="social-item"><span class="fab fa-instagram"></span></a>
+          <a href="https://www.twitter.com/karsergios" class="social-item"><span class="fab fa-twitter"></span></a>
+          <a href="https://www.facebook.com/sergios.karagiannakos" class="social-item"><span class="fab fa-facebook"></span></a>
+          <a href="https://github.com/SergiosKar" class="social-item"><span class="fab fa-github"></span></a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+        <p class="col-12 text-center footer_text">
+        <span>&copy; 2019 Sergios Karagiannakos. All rights reserved.</span>
+        </p>
+    </div>
+  </div>
+</footer>
+</section>
+<!-- JS -->
+ <!-- JavaScript Libraries -->
+ <script src="//lib/jquery/jquery.min.js"></script>
+ <script src="//lib/jquery/jquery-migrate.min.js"></script>
+ <script src="//lib/popper/popper.min.js"></script>
+ <script src="//lib/bootstrap/js/bootstrap.min.js"></script>
+ <script src="//lib/easing/easing.min.js"></script>
+ <script src="//lib/counterup/jquery.waypoints.min.js"></script>
+ <script src="//lib/counterup/jquery.counterup.js"></script>
+ <script src="//lib/lightbox/js/lightbox.min.js"></script>
+ <script src="//lib/typed/typed.min.js"></script>
+ <script src="//js/scripts.js"></script>
+ <script src="//js/contact_form.js"></script>
+
+
+
+  </body>
+
+</html>
+
+
+

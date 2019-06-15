@@ -1,0 +1,99 @@
+
+  
+  /*======================================
+  //--//-->   TESTIMONIALS
+  ======================================*/
+  
+  .testimonials .owl-carousel .owl-item img {
+    width: auto;
+  }
+  
+  .testimonial-box {
+    color: #fff;
+    text-align: center;
+  }
+  
+  .testimonial-box .author-test {
+    margin-top: 1rem;
+  }
+  
+  .testimonial-box .author-test img {
+    margin: 0 auto;
+  }
+  
+  .testimonial-box .author {
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin: 1rem 0;
+    display: block;
+    font-size: 1.4rem;
+  }
+  
+  .testimonial-box .comit {
+    font-size: 2rem;
+    color: $primary-color;
+    background-color: #fff;
+    width: 52px;
+    height: 52px;
+    display: block;
+    margin: 0 auto;
+    border-radius: 50%;
+    line-height: 1.6;
+  }
+  
+  
+  /*------/ Sidebar /------*/
+  
+  .widget-sidebar .sidebar-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    border-left: 5px solid $primary-color;
+    padding-left: 15px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  
+  .widget-sidebar .list-sidebar li {
+    position: relative;
+    padding: 6px 0 6px 24px;
+  }
+  
+  .widget-sidebar .list-sidebar li:before {
+    position: absolute;
+    content: "";
+    width: 10px;
+    height: 1px;
+    left: 0;
+    background-color: $primary-color;
+    top: 20px;
+  }
+  
+  .sidebar-search input {
+    background-color: #fff;
+    border-radius: 0;
+    transition: all 0.5s ease-in-out;
+  }
+  
+  .sidebar-search .btn-search {
+    background-color: $primary-color;
+    border-color: $primary-color;
+    border-radius: 0;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  
+  .widget-tags ul li {
+    display: inline-block;
+    background-color: $primary-color;
+    padding: .2rem .6rem;
+    margin-bottom: .5rem;
+    border-radius: 15px;
+  }
+  
+  .widget-tags ul li a {
+    color: #fff;
+  }
+  
+
+  

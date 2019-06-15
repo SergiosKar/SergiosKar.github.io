@@ -1,0 +1,451 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Decrypt Generative Artificial Intelligence and GANs | Sergios Karagiannakos</title>
+<meta name="generator" content="Jekyll v3.8.5" />
+<meta property="og:title" content="Decrypt Generative Artificial Intelligence and GANs" />
+<meta name="author" content="Sergios Karagiannakos" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Decrypt Generative Artificial Intelligence and GANs Hello all, Today’s topic is a very exciting aspect of AI called generative artificial intelligence. In a few words, generative AI refers to algorithms that make it possible for machines to use things like text, audio files and images to create/generate content. In a previous post, I talked about Variational Autoencoders and how they used to generate new images. I mentioned that they are a part of a bigger set of models called generative models and I will talk more about them in a next article. So here we are. As I briefly explained in that post, there are two types to modes. Discriminative and generative. The first are the most common models, such as convolutional or recurrent neural networks, which used to distinguish/discriminate patterns in data in order to categorize them in classes. Applications such as image recognition, skin-cancer diagnosis, Ethereum prediction are all fall in the category of discriminative modes. The latter are able to generate new patterns in data. As a result, they can produce new images, new text, new music. To put it in a strict mathematical form, discriminative models try to estimate the posterior probability p(y|x), which is the probability of an output sample (e.g the handwritten digit) given an input sample (an image of a handwritten digit). On the other hand, generative models estimate the joint probability p(x,y) , which is the probability of both input sample and sample output to be true at the same time. In reality, it tries to calculate the distribution of a set of classes not the boundary between them. Can you imagine the possibilities? Well you can take a glimpse of them by looking at the current progress in the field and some existing applications. Generative models have been used so far to produce text from images, to develop molecules in oncology, to discover new drugs and to transfer the style of artists like Van Gogh to new images. And I pretty sure you heard about Deepfakes, where they put celebrities faces on any sort of video. And if you think you can tell the fakes apart from the real ones, forget it. You can’t. If you clicked on some of the above links, you may have noticed something that is even more fascinating. All the applications have become possible due to something called GANs. GANs or Gererative Adversarial Networks are the base architecture behind most of generative applications. Of course, there are many other cool models, such as Variational Autoencoders, Deep Boltzman machines, Markov chains but GANs are the reason why there is so much hype in the last three years around generative AI. What are Generative Adversarial Networks? Generative Adversarial Networks were introduced in 2016 by Ian Goodfellow in one of the most promising AI paper of the last decade. They are an unsupervised learning technique and they based on a simple premise: You want to generate new data. What do you do? You build two models. You train the first one to generate fake data and the second one to distinguish real from fakes ones. And you put them compete against each other. Boom! There you have it. I wish it would be as simple as that. It isn’t. But this is the main principle behind GANs. Ok let’s get into some details. The first model is a neural network, called the Generator. Generator’s job is to produce fake data with nothing but noise as input. The second model, the Discriminator, receives as input both the real images and the fake ones (produced by the generator) and learns to identify if the image is fake or not. As you put them contesting against each other and train them simultaneously the magic begins: The generator becomes better and better at image generation, as its ultimate goal is to fool the discriminator. The discriminator becomes better and better at distinguish fake from real images, as its goal is to not be fooled. The result is that we now have incredibly realistic fake data from the discriminator. The above image is a great analogy that describes the functionality between GAN. The Generator can be seen as a forger who creates fraudulent documents and the Discriminator as a Detective who tries to detect them. They participate in a zero-sum game and they both become better and better as the time passes. So far so good. We have the models and now we have to train them. Here is where the problems begin to arise because it is not the standard method where we train a neural network with gradient descent and a loss function. Here we have two models competing against each other. So, what we do? Well we are not sure. Optimization of GAN’s is one of the most active research areas at the moment with many new papers appear constantly. I will try to explain the base here and I am going to need some math and some game theory (!!!) to do that. Please don’t leave. Stay with me and in the end, it is all gonna make sense. How to train them? We can consider that we have a minimax game here. To quote Wikipedia: “The maximin value of a player is the highest value that the player can be sure to get without knowing the actions of the other players; equivalently, it is the lowest value the other players can force the player to receive when they know the player’s action” In other words, the first player tries to maximize his reward while minimizing his opponent reward. The second player tries to accomplish the exact same goal. In our case, the Discriminator tries to maximize the probability of assigning the correct label to both examples of real data and generated samples. While the Generator tries to minimize the probability of the Discriminator’s correct answer. We represent the loss as a minimax function: What do we have here? The discriminator tries to maximize the function; therefore, we can perform gradient ascent on the objective function. The generator tries to minimize the function; therefore, we can perform gradient descent on the function. By alternating between gradient ascent and descent, the models can be trained. The training is stopped when the discriminator can’t maximize the function and the generator can’t minimize it. In game theory terms, they reach Nash equilibrium. def get_gan_network(discriminator, random_dim, generator, optimizer): gan_input = Input(shape=(random_dim,)) x = generator(gan_input) gan_output = discriminator(x) gan = Model(inputs=gan_input, outputs=gan_output) gan.compile(loss=&#39;binary_crossentropy&#39;, optimizer=optimizer) return gan def train(epochs=1, batch_size=128): # Get the training and testing data x_train, y_train, x_test, y_test = load_minst_data() batch_count = x_train.shape[0] / batch_size # Build our GAN netowrk adam = get_optimizer() generator = get_generator(adam) discriminator = get_discriminator(adam) gan = get_gan_network(discriminator, random_dim, generator, adam) for e in range(1, epochs+1): for _ in range(batch_count): # Get a random set of input noise and images noise = np.random.normal(0, 1, size=[batch_size, random_dim]) image_batch = x_train[np.random.randint(0, x_train.shape[0], size=batch_size)] # Generate fake images generated_images = generator.predict(noise) X = np.concatenate([image_batch, generated_images]) # Labels for generated and real data y_dis = np.zeros(2*batch_size) # One-sided label smoothing y_dis[:batch_size] = 0.9 # Train discriminator discriminator.train_on_batch(X, y_dis) # Train generator noise = np.random.normal(0, 1, size=[batch_size, random_dim]) y_gen = np.ones(batch_size) gan.train_on_batch(noise, y_gen) I hope you’re still here. This is the main idea and is called adversarial training. Of course, there are several pitfalls which occur frequently such as: The model parameters oscillate and never converge, The discriminator gets too successful that the generator gradient vanishes It’s highly sensitive to the hyperparameter The generator produces limited varieties of samples Over the past few years, there is a big contribution from scientists to solve these problems and we can say that a lot of progress has been made. Just do a quick search on arxiv-sanity. It’s still very early, though. Remember. GAN’s exists for less than three years. I will close with some key facts. If you skipped the whole article it’s ok. But don’t skip those: Generative artificial intelligence is used to generate new data from real ones The most prominent model of GAI is Generative Adversarial network. GAN’s are two neural networks participated in a game. The first tries to produce new fake data and the second tries to tell them apart from real ones. As they trained, they both get better at what they do. There is work that needs to be done on GAN’s training Real time applications of GAN are … (how can I describe it in a word? Hmmm…) HUUUUUGE. Finito…" />
+<meta property="og:description" content="Decrypt Generative Artificial Intelligence and GANs Hello all, Today’s topic is a very exciting aspect of AI called generative artificial intelligence. In a few words, generative AI refers to algorithms that make it possible for machines to use things like text, audio files and images to create/generate content. In a previous post, I talked about Variational Autoencoders and how they used to generate new images. I mentioned that they are a part of a bigger set of models called generative models and I will talk more about them in a next article. So here we are. As I briefly explained in that post, there are two types to modes. Discriminative and generative. The first are the most common models, such as convolutional or recurrent neural networks, which used to distinguish/discriminate patterns in data in order to categorize them in classes. Applications such as image recognition, skin-cancer diagnosis, Ethereum prediction are all fall in the category of discriminative modes. The latter are able to generate new patterns in data. As a result, they can produce new images, new text, new music. To put it in a strict mathematical form, discriminative models try to estimate the posterior probability p(y|x), which is the probability of an output sample (e.g the handwritten digit) given an input sample (an image of a handwritten digit). On the other hand, generative models estimate the joint probability p(x,y) , which is the probability of both input sample and sample output to be true at the same time. In reality, it tries to calculate the distribution of a set of classes not the boundary between them. Can you imagine the possibilities? Well you can take a glimpse of them by looking at the current progress in the field and some existing applications. Generative models have been used so far to produce text from images, to develop molecules in oncology, to discover new drugs and to transfer the style of artists like Van Gogh to new images. And I pretty sure you heard about Deepfakes, where they put celebrities faces on any sort of video. And if you think you can tell the fakes apart from the real ones, forget it. You can’t. If you clicked on some of the above links, you may have noticed something that is even more fascinating. All the applications have become possible due to something called GANs. GANs or Gererative Adversarial Networks are the base architecture behind most of generative applications. Of course, there are many other cool models, such as Variational Autoencoders, Deep Boltzman machines, Markov chains but GANs are the reason why there is so much hype in the last three years around generative AI. What are Generative Adversarial Networks? Generative Adversarial Networks were introduced in 2016 by Ian Goodfellow in one of the most promising AI paper of the last decade. They are an unsupervised learning technique and they based on a simple premise: You want to generate new data. What do you do? You build two models. You train the first one to generate fake data and the second one to distinguish real from fakes ones. And you put them compete against each other. Boom! There you have it. I wish it would be as simple as that. It isn’t. But this is the main principle behind GANs. Ok let’s get into some details. The first model is a neural network, called the Generator. Generator’s job is to produce fake data with nothing but noise as input. The second model, the Discriminator, receives as input both the real images and the fake ones (produced by the generator) and learns to identify if the image is fake or not. As you put them contesting against each other and train them simultaneously the magic begins: The generator becomes better and better at image generation, as its ultimate goal is to fool the discriminator. The discriminator becomes better and better at distinguish fake from real images, as its goal is to not be fooled. The result is that we now have incredibly realistic fake data from the discriminator. The above image is a great analogy that describes the functionality between GAN. The Generator can be seen as a forger who creates fraudulent documents and the Discriminator as a Detective who tries to detect them. They participate in a zero-sum game and they both become better and better as the time passes. So far so good. We have the models and now we have to train them. Here is where the problems begin to arise because it is not the standard method where we train a neural network with gradient descent and a loss function. Here we have two models competing against each other. So, what we do? Well we are not sure. Optimization of GAN’s is one of the most active research areas at the moment with many new papers appear constantly. I will try to explain the base here and I am going to need some math and some game theory (!!!) to do that. Please don’t leave. Stay with me and in the end, it is all gonna make sense. How to train them? We can consider that we have a minimax game here. To quote Wikipedia: “The maximin value of a player is the highest value that the player can be sure to get without knowing the actions of the other players; equivalently, it is the lowest value the other players can force the player to receive when they know the player’s action” In other words, the first player tries to maximize his reward while minimizing his opponent reward. The second player tries to accomplish the exact same goal. In our case, the Discriminator tries to maximize the probability of assigning the correct label to both examples of real data and generated samples. While the Generator tries to minimize the probability of the Discriminator’s correct answer. We represent the loss as a minimax function: What do we have here? The discriminator tries to maximize the function; therefore, we can perform gradient ascent on the objective function. The generator tries to minimize the function; therefore, we can perform gradient descent on the function. By alternating between gradient ascent and descent, the models can be trained. The training is stopped when the discriminator can’t maximize the function and the generator can’t minimize it. In game theory terms, they reach Nash equilibrium. def get_gan_network(discriminator, random_dim, generator, optimizer): gan_input = Input(shape=(random_dim,)) x = generator(gan_input) gan_output = discriminator(x) gan = Model(inputs=gan_input, outputs=gan_output) gan.compile(loss=&#39;binary_crossentropy&#39;, optimizer=optimizer) return gan def train(epochs=1, batch_size=128): # Get the training and testing data x_train, y_train, x_test, y_test = load_minst_data() batch_count = x_train.shape[0] / batch_size # Build our GAN netowrk adam = get_optimizer() generator = get_generator(adam) discriminator = get_discriminator(adam) gan = get_gan_network(discriminator, random_dim, generator, adam) for e in range(1, epochs+1): for _ in range(batch_count): # Get a random set of input noise and images noise = np.random.normal(0, 1, size=[batch_size, random_dim]) image_batch = x_train[np.random.randint(0, x_train.shape[0], size=batch_size)] # Generate fake images generated_images = generator.predict(noise) X = np.concatenate([image_batch, generated_images]) # Labels for generated and real data y_dis = np.zeros(2*batch_size) # One-sided label smoothing y_dis[:batch_size] = 0.9 # Train discriminator discriminator.train_on_batch(X, y_dis) # Train generator noise = np.random.normal(0, 1, size=[batch_size, random_dim]) y_gen = np.ones(batch_size) gan.train_on_batch(noise, y_gen) I hope you’re still here. This is the main idea and is called adversarial training. Of course, there are several pitfalls which occur frequently such as: The model parameters oscillate and never converge, The discriminator gets too successful that the generator gradient vanishes It’s highly sensitive to the hyperparameter The generator produces limited varieties of samples Over the past few years, there is a big contribution from scientists to solve these problems and we can say that a lot of progress has been made. Just do a quick search on arxiv-sanity. It’s still very early, though. Remember. GAN’s exists for less than three years. I will close with some key facts. If you skipped the whole article it’s ok. But don’t skip those: Generative artificial intelligence is used to generate new data from real ones The most prominent model of GAI is Generative Adversarial network. GAN’s are two neural networks participated in a game. The first tries to produce new fake data and the second tries to tell them apart from real ones. As they trained, they both get better at what they do. There is work that needs to be done on GAN’s training Real time applications of GAN are … (how can I describe it in a word? Hmmm…) HUUUUUGE. Finito…" />
+<link rel="canonical" href="//generative_artificial_intelligence/" />
+<meta property="og:url" content="//generative_artificial_intelligence/" />
+<meta property="og:site_name" content="Sergios Karagiannakos" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-09-13T00:00:00+03:00" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","url":"//generative_artificial_intelligence/","headline":"Decrypt Generative Artificial Intelligence and GANs","dateModified":"2018-09-13T00:00:00+03:00","datePublished":"2018-09-13T00:00:00+03:00","mainEntityOfPage":{"@type":"WebPage","@id":"//generative_artificial_intelligence/"},"author":{"@type":"Person","name":"Sergios Karagiannakos"},"description":"Decrypt Generative Artificial Intelligence and GANs Hello all, Today’s topic is a very exciting aspect of AI called generative artificial intelligence. In a few words, generative AI refers to algorithms that make it possible for machines to use things like text, audio files and images to create/generate content. In a previous post, I talked about Variational Autoencoders and how they used to generate new images. I mentioned that they are a part of a bigger set of models called generative models and I will talk more about them in a next article. So here we are. As I briefly explained in that post, there are two types to modes. Discriminative and generative. The first are the most common models, such as convolutional or recurrent neural networks, which used to distinguish/discriminate patterns in data in order to categorize them in classes. Applications such as image recognition, skin-cancer diagnosis, Ethereum prediction are all fall in the category of discriminative modes. The latter are able to generate new patterns in data. As a result, they can produce new images, new text, new music. To put it in a strict mathematical form, discriminative models try to estimate the posterior probability p(y|x), which is the probability of an output sample (e.g the handwritten digit) given an input sample (an image of a handwritten digit). On the other hand, generative models estimate the joint probability p(x,y) , which is the probability of both input sample and sample output to be true at the same time. In reality, it tries to calculate the distribution of a set of classes not the boundary between them. Can you imagine the possibilities? Well you can take a glimpse of them by looking at the current progress in the field and some existing applications. Generative models have been used so far to produce text from images, to develop molecules in oncology, to discover new drugs and to transfer the style of artists like Van Gogh to new images. And I pretty sure you heard about Deepfakes, where they put celebrities faces on any sort of video. And if you think you can tell the fakes apart from the real ones, forget it. You can’t. If you clicked on some of the above links, you may have noticed something that is even more fascinating. All the applications have become possible due to something called GANs. GANs or Gererative Adversarial Networks are the base architecture behind most of generative applications. Of course, there are many other cool models, such as Variational Autoencoders, Deep Boltzman machines, Markov chains but GANs are the reason why there is so much hype in the last three years around generative AI. What are Generative Adversarial Networks? Generative Adversarial Networks were introduced in 2016 by Ian Goodfellow in one of the most promising AI paper of the last decade. They are an unsupervised learning technique and they based on a simple premise: You want to generate new data. What do you do? You build two models. You train the first one to generate fake data and the second one to distinguish real from fakes ones. And you put them compete against each other. Boom! There you have it. I wish it would be as simple as that. It isn’t. But this is the main principle behind GANs. Ok let’s get into some details. The first model is a neural network, called the Generator. Generator’s job is to produce fake data with nothing but noise as input. The second model, the Discriminator, receives as input both the real images and the fake ones (produced by the generator) and learns to identify if the image is fake or not. As you put them contesting against each other and train them simultaneously the magic begins: The generator becomes better and better at image generation, as its ultimate goal is to fool the discriminator. The discriminator becomes better and better at distinguish fake from real images, as its goal is to not be fooled. The result is that we now have incredibly realistic fake data from the discriminator. The above image is a great analogy that describes the functionality between GAN. The Generator can be seen as a forger who creates fraudulent documents and the Discriminator as a Detective who tries to detect them. They participate in a zero-sum game and they both become better and better as the time passes. So far so good. We have the models and now we have to train them. Here is where the problems begin to arise because it is not the standard method where we train a neural network with gradient descent and a loss function. Here we have two models competing against each other. So, what we do? Well we are not sure. Optimization of GAN’s is one of the most active research areas at the moment with many new papers appear constantly. I will try to explain the base here and I am going to need some math and some game theory (!!!) to do that. Please don’t leave. Stay with me and in the end, it is all gonna make sense. How to train them? We can consider that we have a minimax game here. To quote Wikipedia: “The maximin value of a player is the highest value that the player can be sure to get without knowing the actions of the other players; equivalently, it is the lowest value the other players can force the player to receive when they know the player’s action” In other words, the first player tries to maximize his reward while minimizing his opponent reward. The second player tries to accomplish the exact same goal. In our case, the Discriminator tries to maximize the probability of assigning the correct label to both examples of real data and generated samples. While the Generator tries to minimize the probability of the Discriminator’s correct answer. We represent the loss as a minimax function: What do we have here? The discriminator tries to maximize the function; therefore, we can perform gradient ascent on the objective function. The generator tries to minimize the function; therefore, we can perform gradient descent on the function. By alternating between gradient ascent and descent, the models can be trained. The training is stopped when the discriminator can’t maximize the function and the generator can’t minimize it. In game theory terms, they reach Nash equilibrium. def get_gan_network(discriminator, random_dim, generator, optimizer): gan_input = Input(shape=(random_dim,)) x = generator(gan_input) gan_output = discriminator(x) gan = Model(inputs=gan_input, outputs=gan_output) gan.compile(loss=&#39;binary_crossentropy&#39;, optimizer=optimizer) return gan def train(epochs=1, batch_size=128): # Get the training and testing data x_train, y_train, x_test, y_test = load_minst_data() batch_count = x_train.shape[0] / batch_size # Build our GAN netowrk adam = get_optimizer() generator = get_generator(adam) discriminator = get_discriminator(adam) gan = get_gan_network(discriminator, random_dim, generator, adam) for e in range(1, epochs+1): for _ in range(batch_count): # Get a random set of input noise and images noise = np.random.normal(0, 1, size=[batch_size, random_dim]) image_batch = x_train[np.random.randint(0, x_train.shape[0], size=batch_size)] # Generate fake images generated_images = generator.predict(noise) X = np.concatenate([image_batch, generated_images]) # Labels for generated and real data y_dis = np.zeros(2*batch_size) # One-sided label smoothing y_dis[:batch_size] = 0.9 # Train discriminator discriminator.train_on_batch(X, y_dis) # Train generator noise = np.random.normal(0, 1, size=[batch_size, random_dim]) y_gen = np.ones(batch_size) gan.train_on_batch(noise, y_gen) I hope you’re still here. This is the main idea and is called adversarial training. Of course, there are several pitfalls which occur frequently such as: The model parameters oscillate and never converge, The discriminator gets too successful that the generator gradient vanishes It’s highly sensitive to the hyperparameter The generator produces limited varieties of samples Over the past few years, there is a big contribution from scientists to solve these problems and we can say that a lot of progress has been made. Just do a quick search on arxiv-sanity. It’s still very early, though. Remember. GAN’s exists for less than three years. I will close with some key facts. If you skipped the whole article it’s ok. But don’t skip those: Generative artificial intelligence is used to generate new data from real ones The most prominent model of GAI is Generative Adversarial network. GAN’s are two neural networks participated in a game. The first tries to produce new fake data and the second tries to tell them apart from real ones. As they trained, they both get better at what they do. There is work that needs to be done on GAN’s training Real time applications of GAN are … (how can I describe it in a word? Hmmm…) HUUUUUGE. Finito…","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/icons/favicon-16x16.png">
+  <link rel="manifest" href="/assets/img/icons/site.webmanifest">
+  <link rel="mask-icon" href="/assets/img/icons/safari-pinned-tab.svg?v=qA3OXqyw77" color="#5bbad5">
+  <!--[if IE]><link rel="shortcut icon" href="/assets/img/icons/favicon.ico?v=qA3OXqyw77"><![endif]-->
+  <link rel="shortcut icon" href="/assets/img/icons/favicon.ico">
+  <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
+  <meta name="application-name" content="Sergios Karagiannakos">
+  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
+  <!-- <meta name="msapplication-config" content="/assets/img/icons/browserconfig.xml?v=qA3OXqyw77"> -->
+  <meta name="theme-color" content="#ffffff">
+
+  
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GTM-WMXQPRS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GTM-WMXQPRS');
+</script>
+
+
+  
+
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+</head>
+
+
+  <body class="site">
+
+    
+
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMXQPRS"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    <!--/ Nav Star /-->
+<nav class="navbar navbar-b navbar-trans navbar-expand-md fixed-top" id="mainNav" itemscope itemtype="http://schema.org/SiteNavigationElement" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand js-scroll" href="/"> SERGIOS KARAGIANNAKOS</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarDefault"
+        aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="navbar-collapse collapse justify-content-end" id="navbarDefault">
+        <ul class="navbar-nav">
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" itemprop="url">
+                  <span itemprop="name">Home</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about" itemprop="url">
+                  <span itemprop="name">About</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/portfolio" itemprop="url">
+                  <span itemprop="name">Portfolio</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/blog" itemprop="url">
+                  <span itemprop="name">Blog</span>
+              </a>
+            </li>
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/contact" itemprop="url">
+                  <span itemprop="name">Contact</span>
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!--/ Nav End /-->
+
+    
+
+  <div class="hero" style="background-image: url( //assets/img/posts/gan.jpg">
+  
+    <div class="hero__wrap">
+      
+      <h2 class="hero__title">Decrypt Generative Artificial Intelligence and GANs</h2>
+      <p class="hero__meta">
+        
+        
+                
+        
+        <span class="far fa-clock"> &nbsp Sep 13, 2018</span>
+        <span>&nbsp &nbsp</span>
+        <span class="far fa-calendar">  &nbsp 
+            9 mins
+         read</span>
+      </p>
+    </div>
+  </div>
+
+  
+
+
+        
+    <div class="container">
+        <article class="post-content" itemprop="articleBody">
+
+        <h1 id="decrypt-generative-artificial-intelligence-and-gans">Decrypt Generative Artificial Intelligence and GANs</h1>
+
+<p>Hello all,</p>
+
+<p>Today’s topic is a very exciting aspect of AI called generative artificial
+intelligence. In a few words, generative AI refers to algorithms that make it
+possible for machines to use things like text, audio files and images to
+<strong>create/generate</strong> content. In a previous <a href="https://sergioskar.github.io/Autoencoder/">post</a>,
+I talked about Variational Autoencoders and how they used to generate new images. 
+I mentioned that they are a part of a bigger set of models called generative models and I will talk more
+about them in a next article. So here we are.</p>
+
+<p>As I briefly explained in that post, there are two types to modes.
+Discriminative and generative. The first are the most common models, such as
+convolutional or recurrent neural networks, which used to
+distinguish/discriminate patterns in data in order to categorize them in classes.
+Applications such as image recognition, skin-cancer diagnosis, Ethereum
+prediction are all fall in the category of discriminative modes.</p>
+
+<p>The latter are able to generate <strong>new patterns</strong> in data. As a result, they can
+produce new images, new text, new music. To put it in a strict mathematical
+form, discriminative models try to estimate the posterior probability p(y|x),
+which is the probability of an output sample (e.g the handwritten digit)
+<strong>given</strong> an input sample (an image of a handwritten digit). On the other hand,
+generative models estimate the joint probability p(x,y) , which is the
+probability of both input sample and sample output to be true at the same time.
+In reality, it tries to calculate <strong>the distribution of a set of classes not the
+boundary between them.</strong></p>
+
+<p>Can you imagine the possibilities? Well you can take a glimpse of them by
+looking at the current progress in the field and some existing applications.
+Generative models have been used so far to produce <a href="https://arxiv.org/pdf/1711.10485.pdf">text from
+images</a>, to <a href="http://www.oncotarget.com/index.php?journal=oncotarget&amp;page=article&amp;op=view&amp;path%5B0%5D=14073&amp;path%5B1%5D=44886">develop molecules in
+oncology</a>,
+to <a href="https://arxiv.org/abs/1708.08227">discover new drugs</a> and to <a href="https://deepart.io/">transfer the
+style</a> of artists like Van Gogh to new images. And I pretty
+sure you heard about Deepfakes, where they put celebrities faces on any sort of
+video. And if you think you can tell the fakes apart from the real ones, forget
+it. You can’t.</p>
+
+<p>If you clicked on some of the above links, you may have noticed something that is
+even more fascinating. All the applications have become possible due to
+something called GANs. GANs or <strong>Gererative Adversarial Networks</strong> are the base
+architecture behind most of generative applications. Of course, there are many
+other cool models, such as Variational Autoencoders, Deep Boltzman machines,
+Markov chains but GANs are the reason why there is so much hype in the last
+three years around generative AI.</p>
+
+<h2 id="what-are-generative-adversarial-networks">What are Generative Adversarial Networks?</h2>
+
+<p>Generative Adversarial Networks were introduced in 2016 by Ian Goodfellow in one
+of the most promising AI <a href="https://arxiv.org/pdf/1406.2661.pdf">paper</a> of the
+last decade. They are an unsupervised learning technique and they based on a
+simple premise:</p>
+
+<p>You want to generate new data. What do you do? You build two models<strong>. You train
+the first one to generate fake data and the second one to distinguish real from
+fakes ones. And you put them compete against each other</strong>.</p>
+
+<p>Boom! There you have it. I wish it would be as simple as that. It isn’t. But
+this is the main principle behind GANs.</p>
+
+<p>Ok let’s get into some details. The first model is a neural network, called the
+Generator. Generator’s job is to produce fake data with nothing but noise as
+input. The second model, the Discriminator, receives as input both the real
+images and the fake ones (produced by the generator) and learns to identify if
+the image is fake or not. As you put them contesting against each other and
+train them simultaneously the magic begins:</p>
+
+<p>The generator becomes better and better at image generation, as its ultimate
+goal is to fool the discriminator. The discriminator becomes better and better
+at distinguish fake from real images, as its goal is to not be fooled. The
+result is that we now have incredibly realistic fake data from the
+discriminator.</p>
+
+<p><img src="//assets/img/posts/gan.jpg" alt="GAN" /></p>
+
+<p>The above image is a great analogy that describes the functionality between GAN.
+The Generator can be seen as a forger who creates fraudulent documents and the
+Discriminator as a Detective who tries to detect them. They participate in a
+zero-sum game and they both become better and better as the time passes.</p>
+
+<p>So far so good. We have the models and now we have to train them. Here is where
+the problems begin to arise because it is not the standard method where we train
+a neural network with gradient descent and a loss function. Here we have two
+models competing against each other. So, what we do?</p>
+
+<p>Well we are not sure. Optimization of GAN’s is one of the most active research
+areas at the moment with many new papers appear constantly. I will try to
+explain the base here and I am going to need some math and some game theory
+(!!!) to do that. Please don’t leave. Stay with me and in the end, it is all
+gonna make sense.</p>
+
+<h2 id="how-to-train-them">How to train them?</h2>
+
+<p>We can consider that we have a <a href="https://en.wikipedia.org/wiki/Minimax">minimax</a>
+game here. To quote Wikipedia: “The maximin value of a player is the highest
+value that the player can be sure to get without knowing the actions of the
+other players; equivalently, it is the lowest value the other players can force
+the player to receive when they know the player’s action”</p>
+
+<p>In other words, the first player tries to maximize his reward while minimizing
+his opponent reward. The second player tries to accomplish the exact same goal.</p>
+
+<p>In our case, <strong>the Discriminator tries to maximize the probability of assigning
+the correct label to both examples of real data and generated samples. While the
+Generator tries to minimize the probability of the Discriminator’s correct
+answer</strong>.</p>
+
+<p>We represent the loss as a minimax function:</p>
+
+<p><img src="//assets/img/posts/gan_training.jpg" alt="GAN" /></p>
+
+<p>What do we have here?</p>
+
+<p>The discriminator tries to maximize the function; therefore, we can perform
+gradient ascent on the objective function. The generator tries to minimize the
+function; therefore, we can perform gradient descent on the function. By
+alternating between gradient ascent and descent, the models can be trained.</p>
+
+<p>The training is stopped when the discriminator can’t maximize the function and
+the generator can’t minimize it. In game theory terms, they reach Nash
+equilibrium.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_gan_network</span><span class="p">(</span><span class="n">discriminator</span><span class="p">,</span> <span class="n">random_dim</span><span class="p">,</span> <span class="n">generator</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
+    <span class="n">gan_input</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">random_dim</span><span class="p">,))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">generator</span><span class="p">(</span><span class="n">gan_input</span><span class="p">)</span>
+    <span class="n">gan_output</span> <span class="o">=</span> <span class="n">discriminator</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">gan</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">gan_input</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="n">gan_output</span><span class="p">)</span>
+    <span class="n">gan</span><span class="o">.</span><span class="nb">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s">'binary_crossentropy'</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gan</span>
+
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
+    <span class="c1"># Get the training and testing data
+</span>    <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">load_minst_data</span><span class="p">()</span>
+    <span class="n">batch_count</span> <span class="o">=</span> <span class="n">x_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">batch_size</span>
+
+    <span class="c1"># Build our GAN netowrk
+</span>    <span class="n">adam</span> <span class="o">=</span> <span class="n">get_optimizer</span><span class="p">()</span>
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">get_generator</span><span class="p">(</span><span class="n">adam</span><span class="p">)</span>
+    <span class="n">discriminator</span> <span class="o">=</span> <span class="n">get_discriminator</span><span class="p">(</span><span class="n">adam</span><span class="p">)</span>
+    <span class="n">gan</span> <span class="o">=</span> <span class="n">get_gan_network</span><span class="p">(</span><span class="n">discriminator</span><span class="p">,</span> <span class="n">random_dim</span><span class="p">,</span> <span class="n">generator</span><span class="p">,</span> <span class="n">adam</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_count</span><span class="p">):</span>
+                    <span class="c1"># Get a random set of input noise and images
+</span>                    <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">random_dim</span><span class="p">])</span>
+                    <span class="n">image_batch</span> <span class="o">=</span> <span class="n">x_train</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">x_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)]</span>
+
+                    <span class="c1"># Generate fake images
+</span>                    <span class="n">generated_images</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+                    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">image_batch</span><span class="p">,</span> <span class="n">generated_images</span><span class="p">])</span>
+
+                    <span class="c1"># Labels for generated and real data
+</span>                    <span class="n">y_dis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">batch_size</span><span class="p">)</span>
+                    <span class="c1"># One-sided label smoothing
+</span>                    <span class="n">y_dis</span><span class="p">[:</span><span class="n">batch_size</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.9</span>
+
+                    <span class="c1"># Train discriminator
+</span>                    <span class="n">discriminator</span><span class="o">.</span><span class="n">train_on_batch</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y_dis</span><span class="p">)</span>
+
+                    <span class="c1"># Train generator
+</span>                    <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">random_dim</span><span class="p">])</span>
+                    <span class="n">y_gen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+                    <span class="n">gan</span><span class="o">.</span><span class="n">train_on_batch</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">y_gen</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>I hope you’re still here. This is the main idea and is called adversarial
+training. Of course, there are several pitfalls which occur frequently such as:</p>
+
+<ul>
+  <li>
+    <p>The model parameters oscillate and never converge,</p>
+  </li>
+  <li>
+    <p>The discriminator gets too successful that the generator gradient vanishes</p>
+  </li>
+  <li>
+    <p>It’s highly sensitive to the hyperparameter</p>
+  </li>
+  <li>
+    <p>The generator produces limited varieties of samples</p>
+  </li>
+</ul>
+
+<p>Over the past few years, there is a big contribution from scientists to solve
+these problems and we can say that a lot of progress has been made. Just do a
+quick search on <a href="http://www.arxiv-sanity.com/">arxiv-sanity</a>. It’s still very
+early, though. Remember. GAN’s exists for less than three years.</p>
+
+<p>I will close with some key facts. If you skipped the whole article it’s ok. But
+don’t skip those:</p>
+
+<ul>
+  <li>
+    <p>Generative artificial intelligence is used to generate new data from real
+ones</p>
+  </li>
+  <li>
+    <p>The most prominent model of GAI is Generative Adversarial network.</p>
+  </li>
+  <li>
+    <p>GAN’s are two neural networks participated in a game. The first tries to
+produce new fake data and the second tries to tell them apart from real
+ones. As they trained, they both get better at what they do.</p>
+  </li>
+  <li>
+    <p>There is work that needs to be done on GAN’s training</p>
+  </li>
+  <li>
+    <p>Real time applications of GAN are … (how can I describe it in a word?
+Hmmm…) HUUUUUGE.</p>
+  </li>
+</ul>
+
+<p>Finito…</p>
+
+
+        </article>
+        <div class="post-content controls__inner">
+        <div class="controls__item prev">
+            
+
+            <span>Previous</span>
+            <a href="/Autoencoder/">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="fillColor" d="M5.647 1.718c.37-.434.323-1.09-.106-1.465A1.016 1.016 0 0 0 4.095.36L.25 4.875a1.05 1.05 0 0 0 .017 1.378l3.95 4.407c.38.424 1.03.456 1.448.07a1.05 1.05 0 0 0 .07-1.468l-3.34-3.725 3.253-3.819z"/>
+                    </svg>
+                </span>
+            How to Generate Images usin...
+            </a>
+            
+        </div>
+
+        <div class="controls__item next">
+            
+            <span>Next</span>
+            <a href="/Reinforcement_learning/">
+            The secrets behind Reinforc...
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="11">
+                    <path fill="#fillColor" d="M.353 9.282c-.37.434-.323 1.09.106 1.465a1.016 1.016 0 0 0 1.446-.107L5.75 6.125a1.05 1.05 0 0 0-.017-1.378L1.784.34A1.015 1.015 0 0 0 .336.27a1.05 1.05 0 0 0-.07 1.468l3.34 3.725L.353 9.282z"/>
+                </svg>
+                </span>
+            </a>
+            
+        </div>
+        </div>
+    </div>
+
+
+  
+
+
+    
+
+<section class="paralax-mf footer-paralax bg-image " >
+<footer class="site-footer">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-md-12 text-center">
+        <p>
+          <a href="https://www.linkedin.com/in/sergios-karagiannakos " class="social-item"><span class="fab fa-linkedin"></span></a>
+          <a href="https://www.instagram.com/sergios_krg" class="social-item"><span class="fab fa-instagram"></span></a>
+          <a href="https://www.twitter.com/karsergios" class="social-item"><span class="fab fa-twitter"></span></a>
+          <a href="https://www.facebook.com/sergios.karagiannakos" class="social-item"><span class="fab fa-facebook"></span></a>
+          <a href="https://github.com/SergiosKar" class="social-item"><span class="fab fa-github"></span></a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+        <p class="col-12 text-center footer_text">
+        <span>&copy; 2019 Sergios Karagiannakos. All rights reserved.</span>
+        </p>
+    </div>
+  </div>
+</footer>
+</section>
+<!-- JS -->
+ <!-- JavaScript Libraries -->
+ <script src="//lib/jquery/jquery.min.js"></script>
+ <script src="//lib/jquery/jquery-migrate.min.js"></script>
+ <script src="//lib/popper/popper.min.js"></script>
+ <script src="//lib/bootstrap/js/bootstrap.min.js"></script>
+ <script src="//lib/easing/easing.min.js"></script>
+ <script src="//lib/counterup/jquery.waypoints.min.js"></script>
+ <script src="//lib/counterup/jquery.counterup.js"></script>
+ <script src="//lib/lightbox/js/lightbox.min.js"></script>
+ <script src="//lib/typed/typed.min.js"></script>
+ <script src="//js/scripts.js"></script>
+ <script src="//js/contact_form.js"></script>
+
+
+
+  </body>
+
+</html>
+
+
+
