@@ -3,7 +3,7 @@ title: Sergios Karagiannakos # your site title
 author: Sergios Karagiannakos # You :P
 description:  Machine Learning Engineer,Software Engineer,Data Scientist # Meta description of Homepagez
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "/" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://sergioskar.github.io/" # the base hostname & protocol for your site, e.g. http://example.com
 
 # SEO PLUGIN
 social:
