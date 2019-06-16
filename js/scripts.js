@@ -115,4 +115,79 @@
 	// 	}
 	// });
 
+
+	//progress bar
+	
+	$(".skill-mf").each(function() {
+        $(this).waypoint(function() {
+            var progressBar = $(".progress-bar");
+            progressBar.each(function(indx){
+                $(this).css("width", $(this).attr("aria-valuenow") + "%")
+            })
+        }, {
+            triggerOnce: true,
+            offset: 'bottom-in-view'
+
+        });
+	});
+	
+
+
+
+	$(".services-mf .service-box").each(function() {
+		var self=this;
+        $(this).waypoint(function() {
+			$(self).addClass('animated fadeIn');
+            
+        }, {
+            triggerOnce: true,
+            offset: 'bottom-in-view'
+
+        });
+	});
+
+	$(".timeline .content").each(function() {
+		var self=this;
+        $(this).waypoint(function() {
+			$(self).addClass('animated fadeInLeft');
+            
+        }, {
+            triggerOnce: true,
+            offset: 'bottom-in-view'
+
+        });
+	});
+	
+	$(".blog-mf .post-card").each(function() {
+		var self=this;
+        $(this).waypoint(function() {
+			console.log('aaaaaa')
+			$(self).addClass('animated fadeIn');
+            
+        }, {
+            triggerOnce: true,
+            offset: 'bottom-in-view'
+
+        });
+	});
+	
+	
+	
 })(jQuery);
+
+// $(".portogolio-mf").each(function() {
+// 	$(this).waypoint(function() {
+// 		$('.project').each(function(indx){
+// 			$(this).addClass('fadeInLeft');
+// 		})
+// 	}, {
+// 		triggerOnce: true,
+// 		offset: 'bottom-in-view'
+
+// 	});
+// });
+
+
+
+
+

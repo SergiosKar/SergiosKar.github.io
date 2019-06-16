@@ -36,9 +36,12 @@
     margin: .5rem 0 1.2rem 0;
     border-radius: 0;
     height: .7rem;
+      
   }
   
   .skill-mf .progress .progress-bar {
     height: .7rem;
     background-color: $primary-color;
+     -webkit-transition: width 2.5s ease !important;
+    transition: width 2.5s ease !important;
   }

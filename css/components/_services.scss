@@ -9,7 +9,15 @@
     padding: 2.5rem 1.3rem;
     border-radius: 1rem;
     margin-bottom: 3rem;  
-    height:80%
+    height:80%;
+    opacity:0;
+
+    .animated{
+      animation-duration: 2.5s;
+      animation-delay: 0.5s !important;
+      opacity:1
+
+    }
   }
   
   .service-box:hover .ico-circle {
