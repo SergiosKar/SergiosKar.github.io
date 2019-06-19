@@ -15,7 +15,7 @@
     float: left; 
     text-align: center;
 }
-#share-buttons > a > svg {height: 16px; fill: #d5d5d5; margin-top: 10px;}
+#share-buttons > a > svg {height: 16px; ; margin-top: 10px;}
 #share-buttons > a:hover {cursor: pointer;}
 #share-buttons > a.facebook:hover > svg {fill: #3B5998;}
 #share-buttons > a.twitter:hover > svg {fill: #55ACEE;}
@@ -32,7 +32,7 @@
 #share-buttons > a.mail > svg {height: 14px; margin-top: 11px;}
 </style>
 
-<span style="color: #3863a2;">Share on: </span><div id="share-buttons">
+<span style="color: #3863a2; font-weight: bolder">Share on: </span><div id="share-buttons">
     <a class="facebook" href="https://www.facebook.com/sharer/sharer.php?u={{ site.url }}{{ page.url }}" 
         title="Share this on Facebook"             
         onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;">
