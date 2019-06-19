@@ -17,7 +17,21 @@
   <meta name="application-name" content="Sergios Karagiannakos">
   <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
   <!-- <meta name="msapplication-config" content="{{ '/assets/img/icons/browserconfig.xml?v=qA3OXqyw77' | relative_url }}"> -->
+  <!-- <meta property="og:title" content="{{site.title}}">
+  <meta property="og:description" content="{{site.description}}.">
+  <meta property="og:image" content="{{site.img}}">
+  <meta property="og:url" content="{{site.url}}">
+  <meta name="twitter:card" content="summary"> -->
+  {% if page.layout=="post" %}
+  <meta property="og:url" content="{{ site.url }}{{ page.url }}" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="{{ page.title }}" />
+  <meta property="og:description" content="{{ page.summary | markdownify | strip_html | strip_newlines | truncate: 300 }}" />
+  <meta property="og:image" content="{{ site.url }}/assets/img/posts/{{ page.featured-img }}.jpg" />
+  {%endif%}
   <meta name="theme-color" content="#ffffff">
+
+
 
   {% if site.google_tag_manager %}
 
