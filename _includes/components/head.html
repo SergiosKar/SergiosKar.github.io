@@ -4,7 +4,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   {% seo %}
+  <meta property="og:image" content="{{ site.url }}/assets/img/{{ site.img }}.jpg" />
 
+  <meta name="twitter:image:src" content="{{ site.url }}/assets/img/{{ site.img }}.jpg">
+  <meta name="twitter:site" content="Sergios Karagiannakos">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Sergios Karagiannakos">
+  <meta name="twitter:description" content="Machine Learning Engineer,Software Engineer,Data Scientist">
 
   <link rel="apple-touch-icon" sizes="180x180" href="{{ '/assets/img/icons/apple-touch-icon.png | relative_url }}">
   <link rel="icon" type="image/png" sizes="32x32" href="{{'/assets/img/icons/favicon-32x32.png' | relative_url }}">
@@ -15,8 +21,9 @@
   <link rel="shortcut icon" href="{{ '/assets/img/icons/favicon.ico?' | relative_url }}">
   <meta name="apple-mobile-web-app-title" content="Sergios Karagiannakos">
   <meta name="application-name" content="Sergios Karagiannakos">
-  <meta name="description" content="Machine Learning Engineer,Software Engineer,Data Scientist"/>
   
+ 
+<!-- 
   {% if page.layout=="post" %}
   <meta property="og:url" content="{{ site.url }}{{ page.url }}" />
   <meta property="og:type" content="article" />
@@ -24,7 +31,9 @@
   <meta property="og:description" content="{{ page.summary | markdownify | strip_html | strip_newlines | truncate: 300 }}" />
   <meta property="og:image" content="{{ site.url }}/assets/img/posts/{{ page.featured-img }}.jpg" />
   <meta name="twitter:card" content="summary"> 
-  {%endif%}
+
+
+  {%endif%} -->
   <meta name="theme-color" content="#ffffff">
 
 
