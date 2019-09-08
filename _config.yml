@@ -1,7 +1,7 @@
 # SITE CONFIGURATION
 title: Sergios Karagiannakos # your site title
 author: Sergios Karagiannakos # You :P
-description:  Machine Learning Engineer,Software Engineer,Data Scientist # Meta description of Homepagez
+description:  Machine Learning Engineer,Software Engineer,Full-Stack Web Developer # Meta description of Homepagez
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://sergioskar.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 img: website_photo2
@@ -34,7 +34,7 @@ navigation: # Navigation links
 
 
 tagline: >
-  Machine Learning Engineer,Software Engineer,Data Scientist 
+  Machine Learning Engineer,Software Engineer,Full-Stack Web Developer 
 
 hero_img: background_img2.jpg 
 
