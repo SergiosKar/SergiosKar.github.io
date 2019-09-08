@@ -2,7 +2,7 @@
 
 layout: default
 title: Sergios Karagiannakos
-description: Machine Learning Engineer,Software Engineer,Data Scientist
+description: Machine Learning Engineer,Software Engineer,Full-Stack Web Developer
 home_img: website_photo3  
 about_img: website_photo2   
 background_img: website_photo3 
@@ -10,7 +10,7 @@ background_img: website_photo3
 
 
 about_me1: My name is Sergios and I am here to help you build your amazing product
-about_me2: I am an Artificial Intelligence Engineer and I develop Machine Learning related software.   
+about_me2: I am a Full-Stack Web Developer who specialized in Machine Learning.   
 about_me3: What is my primary goal...? To help you develop your AI product and increase your business value through Data Science.
 
 
