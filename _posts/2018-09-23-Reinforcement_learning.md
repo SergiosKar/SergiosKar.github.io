@@ -3,6 +3,8 @@ layout: post
 title:  The secrets behind Reinforcement Learning
 summary: The central idea behind reinforcement learning and an overview of its algorithms
 featured-img: RL
+redirect_to:
+  - https://theaisummer.com/Reinforcement_learning
 ---
 
 #  The secrets behind Reinforcement Learning

@@ -3,6 +3,8 @@ layout: post
 title:  Deep Learning- The future or another AI buzzword
 summary: How deep learning is changing the world
 featured-img: deep_learning
+redirect_to:
+  - https://theaisummer.com/Deep_learning
 ---
 
 

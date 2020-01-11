@@ -3,6 +3,8 @@ layout: post
 title:  Policy Gradients
 summary: Explore Policy-based methods and dive into policy gradients
 featured-img: pong_pg
+redirect_to:
+  - https://theaisummer.com/Policy-Gradients
 ---
 
 # Unravel Policy Gradients and REINFORCE

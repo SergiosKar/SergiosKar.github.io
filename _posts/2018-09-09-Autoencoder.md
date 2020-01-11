@@ -3,6 +3,8 @@ layout: post
 title:  How to Generate Images using Autoencoders
 summary: Learn what autoencoders are and build one to generate new images
 featured-img: vae
+redirect_to:
+  - https://theaisummer.com/Autoencoder
 ---
 
 # How to Generate Images using Autoencoders

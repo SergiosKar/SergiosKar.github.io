@@ -3,6 +3,8 @@ layout: post
 title: Neural Network from scratch-part 2
 summary: How to buld a neural network library using C++ and OpenCL
 featured-img: NN
+redirect_to:
+  - https://theaisummer.com/Neural_Network_from_scratch_part2
 ---
 
 # Convolutional neural network
