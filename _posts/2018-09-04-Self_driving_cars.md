@@ -3,8 +3,6 @@ layout: post
 title:  Self-driving cars using Deep Learning
 summary: How self driving cars work and how to program one (sort of)
 featured-img: sdc_sensors
-redirect_to:
-  - https://theaisummer.com/Self_driving_cars
 ---
 
 # Self-driving cars using Deep Learning

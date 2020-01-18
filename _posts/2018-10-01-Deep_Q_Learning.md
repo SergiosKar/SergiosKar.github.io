@@ -3,8 +3,6 @@ layout: post
 title:  Deep Q Learning
 summary: Learn what Q Learning is and build a Deep Q Network to play games
 featured-img: DQN
-redirect_to:
-  - https://theaisummer.com/Deep_Q_Learning
 ---
 
 # Deep Q Learning

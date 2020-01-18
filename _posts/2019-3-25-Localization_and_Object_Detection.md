@@ -3,8 +3,6 @@ layout: post
 title:   Localization and Object Detection with Deep Learning 
 summary: Explain RCNN, Fast RCNN and Faster RCNN
 featured-img: regions_proposals
-redirect_to:
-  - https://theaisummer.com/Localization_and_Object_Detection
 ---
 
 # Localization and Object Detection with Deep Learning (part 1)

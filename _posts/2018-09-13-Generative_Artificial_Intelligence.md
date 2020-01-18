@@ -3,8 +3,6 @@ layout: post
 title:  Decrypt Generative Artificial Intelligence and GANs
 summary: What's the difference of generative and discriminative models and what is a GAN
 featured-img: gan
-redirect_to:
-  - https://theaisummer.com/Generative_Artificial_Intelligence
 ---
 
 # Decrypt Generative Artificial Intelligence and GANs

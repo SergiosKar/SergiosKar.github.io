@@ -3,8 +3,6 @@ layout: post
 title:  Predict Bitcoin price with LSTM
 summary: How to use recurrent neural networks to forecast cryptocurrencies price 
 featured-img: btc_prediction_plot
-redirect_to:
-  - https://theaisummer.com/Bitcon_prediction_LSTM
 ---
 
 # Predict Bitcoin price with LSTM
