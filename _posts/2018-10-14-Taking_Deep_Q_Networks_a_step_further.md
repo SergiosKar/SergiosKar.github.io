@@ -3,6 +3,8 @@ layout: post
 title:  Taking Deep Q Networks a step further
 summary: Fixed Q-targets, Double DQN, Dueling DQN, Prioritized Replay
 featured-img: DDQN
+redirect_to:
+  - https://theaisummer.com/Taking_Deep_Q_Networks_a_step_further
 ---
 
 # Taking Deep Q Networks a step further

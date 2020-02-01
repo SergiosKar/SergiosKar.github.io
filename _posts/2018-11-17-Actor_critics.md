@@ -3,6 +3,8 @@ layout: post
 title:  The idea behind Actor-Critics and how A2C and A3C improve them
 summary: Actor critics, A2C, A3C
 featured-img: a3c
+redirect_to:
+  - https://theaisummer.com/Actor_critics
 ---
 
 # The idea behind Actor-Critics and how A2C and A3C improve them

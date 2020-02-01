@@ -3,6 +3,8 @@ layout: post
 title:  Semantic Segmentation in the era of Neural Networks
 summary: Semantic segmentation with deep learning
 featured-img: semseg
+redirect_to:
+  - https://theaisummer.com/Semantic_Segmentation
 ---
 
 # Semantic Segmentation in the era of Neural Networks

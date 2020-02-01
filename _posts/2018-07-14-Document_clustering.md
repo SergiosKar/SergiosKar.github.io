@@ -3,6 +3,8 @@ layout: post
 title: Document clustering
 summary: Use unsupervised learning to cluster documents based on their content
 featured-img: nlp_20_0
+redirect_to:
+  - https://theaisummer.com/Document_clustering
 ---
 
 # Document clustering
