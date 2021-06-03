@@ -1,9 +1,9 @@
 module.exports = {
   siteMetadata: {
-    description: "Personal page of John Doe",
+    description: "Personal website of Sergios Karagiannakos",
     locale: "en",
     showThemeLogo: false,
-    title: "John Doe",
+    title: "Sergios Karagiannakos",
     formspreeEndpoint: "https://formspree.io/f/{your-id}",
   },
   plugins: [
