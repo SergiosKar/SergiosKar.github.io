@@ -1,18 +1,23 @@
-- company: Atomic Studio
-  position: Senior Web Developer
-  period: January 2018 - present
-  url: https://atomic.studio
 
-- company: Atomic Studio
-  position: Web Developer
-  period: January 2014 - December 2017
-  url: https://atomic.studio
+- company: AI Summer
+  position: Founder and Deep Learning Writer
+  period: June 2018 - present
+  url: https://theaisummer.com
 
-- company: WebConnect Agency
-  position: Junior Web Developer
-  period: November 2010 - December 2013
-  url:
+- company: HubSpot
+  position:  Software Engineer in the Machine Learning Infrastructure team
+  period: November 2019 - November 2020
+  url: https://www.hubspot.com/
 
-- company: Freelance
-  position: Web Developer
-  period: April 2008 - October 2010
+- company: Eworx SA
+  position: Data Scientist
+  period: January 2017 - December 2017
+  url: https://www.eworx.gr/
+
+- company: Freelance Sofware Engineer
+  position: Independent contractor with startups
+  period: April 2016 - June 2018
+
+- company: University of Patras
+  position: MEng Electrical and Computer Engineer
+  period: September 2012- September 2017

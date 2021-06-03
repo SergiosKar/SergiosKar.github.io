@@ -1,18 +1,46 @@
-- name: Example 1
-  url: https://github.com
-  description: Override the digital divide with additional clickthroughs from DevOps. User generated content in real-time will have multiple touchpoints for offshoring.
-  status: in progress
-  tags:
-    - JavaScript
-    - Gatsby
-  icon: github
-
-- name: Example 2
-  url: https://github.com
-  description: Leverage agile frameworks to provide a robust synopsis for high level overviews.
+- name: AI Summer
+  url: https://theaisummer.com/
+  description: |
+    AI Summer is one of the biggest educational Deep Learning blogs globally with over 20.000 monthly visitors, a newsletter of 3000 emails and more than 80 highly detailed articles. 
+    
+    We cover a wide range of topics  from Computer Vision and Natural Language Processing to Machine Learning Infrastructure, Medical Imaging and Reinforcement Learning.
   status: live
   tags:
-    - JavaScript
-    - HTML
-  icon: website
-  image: images/project.jpg
+    - Deep Learning
+    - Machine Learning
+  # icon: github 
+
+- name: Deep Learning in Production
+  url: https://github.com/The-AI-Summer/Deep-Learning-In-Production
+  description: An article series and eBook exploring how to develop, deploy and scale Deep Learning pipelines with Tensorflow
+  status: live
+  tags:
+    - MLOps
+    - Tensorflow
+  # icon: website
+  # image: images/project.jpg
+
+- name: Master thesis - Development of computer vision framework with deep learning techniques	
+  url: https://nemertes.lis.upatras.gr/jspui/handle/10889/10955?mode=full
+  description: Development of Computer Vision framework based on deep learning and
+              GPU programming. We designed a convolutional and full connected neural network library from scratch
+              for object recognition in images. The training of the network and the computation of its output run on
+              GPU, programmed with OpenCV, OpenCL and C++
+  tags:
+    - GPU programming
+    - Computer vision
+
+
+- name: Chill- Meet and Movie Date
+  description:  Developed and published an Android app with a NoSQL database and a server
+                hosted in Google cloud. The app connects users via common interests in movies and tv shows and it organically
+                grew to more than 500 users within the first two weeks.
+  tags:
+    - Android
+    - Java
+- name: Differential Wheeled Robot
+  description: Programmed an embedded board for a 2 wheeled robot. he robot is able to move to straight line, follow a certain path,such as a trinagle or a circle , detect and avoid obstacles with supersonic sensor.
+  url: https://github.com/SergiosKar/-Robotic-vehicle
+  tags:
+    - Embedded programming
+  icon: github 
