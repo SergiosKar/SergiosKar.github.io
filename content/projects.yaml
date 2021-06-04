@@ -1,8 +1,8 @@
 - name: AI Summer
   url: https://theaisummer.com/
   description: |
-    AI Summer is one of the biggest educational Deep Learning blogs globally with over 20.000 monthly visitors, a newsletter of 3000 emails and more than 80 highly detailed articles. 
-    
+    I founded AI Summer as a way to document my journey in Machine Learning. Now AI Summer is one of the biggest educational Deep Learning blogs globally with over 20.000 monthly visitors, a newsletter of 3000 emails and more than 80 highly detailed articles. 
+
     We cover a wide range of topics  from Computer Vision and Natural Language Processing to Machine Learning Infrastructure, Medical Imaging and Reinforcement Learning.
   status: live
   image: images/aisummer-image.png
@@ -27,7 +27,7 @@
     - Deep Learning
     - Tensorflow
 
-- name: HubSpot - Machine Learning Infrastructure team	
+- name: HubSpot - Machine Learning Infrastructure team
   description: |
     • The Machine Learning Infrastructure team is responsible for building and maintaining all Machine Learning services and pipelines inside HubSpot. Handled more than 1 billion requests per day and almost 70 machine learning models on production.
 
@@ -38,11 +38,11 @@
     - Java
   image: images/hubspot-logo.jpeg
 
-- name: Master thesis - Development of computer vision framework with deep learning techniques	
+- name: Master thesis - Development of computer vision framework with deep learning techniques
   url: https://nemertes.lis.upatras.gr/jspui/handle/10889/10955?mode=full
   description: |
     As part of my thesis during my MEng degree in Electrical and Computer Engineering , we developed a Computer Vision library that allows the user to recognize objects in images using deep learning. To accomplish that, the user/developer can define his own neural network architecture and train his own images on it.
-  
+
     The system supports fully connected and convolutional neural networks , which we implement in C++ from scratch. To speed up the training, we decided use parallelization and execute the training in GPU, which we programmed with the OpenCL library. Also OpenCV was used to parse and read the images and do all the necessary preprocessing of the dataset.
   tags:
     - Deep Learning
@@ -50,11 +50,11 @@
     - Computer vision
 
 - name: Eworx SA
-  description:  |
+  description: |
     • Built the core of a real-time Recommendation Engine with Python using Natural Language processing and Machine Learning techniques for Experly, a travelling web application.
-    
+
     • Designed an in-house library for Source Code Analysis for different programming languages.
-    
+
     • Implemented data science pipelines for tasks such as spell correction, language detection on different projects for European organizations such as CEDEFOP and Skills Panorama websites.
   image: images/eworx-logo.jpg
   tags:
@@ -62,7 +62,7 @@
     - Python
     - Javascript
 - name: European Training Foundation Database
-  description:  |
+  description: |
     During my time on Eworx SA, I developed a full-stack web application for the European Training Foundation (ETF). The purpose of the app is to store, organize and manipulate their data, perform validations and verifications on them and build reports for internal or external use.
 
     The user is able to add, edit or delete data from the browser using an excel-like table, create reports based on selected filters and build interactive visualizations such as Pie Charts, Bar Charts and Maps.
@@ -71,9 +71,10 @@
     - R
     - Javascript
 - name: Chill- Meet and Movie Date
-  description:  Developed and published an Android app with a NoSQL database and a server
-                hosted in Google cloud. The app connects users via common interests in movies and tv shows and it organically
-                grew to more than 500 users within the first two weeks.
+  description:
+    Developed and published an Android app with a NoSQL database and a server
+    hosted in Google cloud. The app connects users via common interests in movies and tv shows and it organically
+    grew to more than 500 users within the first two weeks.
   image: images/portofolio/chill.jpg
   tags:
     - Android
@@ -84,17 +85,17 @@
   image: images/portofolio/robot_car.jpg
   tags:
     - Embedded programming
-  icon: github 
+  icon: github
 - name: Robot motion plainning
   description: Designed a system for robot navigation on 2D space with C++ and computational geometry techniques, such as voronoi diagrams and visibility graphs.
   image: images/portofolio/robot_motion_planning.jpg
   tags:
     - Robotics
-  icon: github 
+  icon: github
 - name: Simulation of Robotic Arm
   description: Study of Kinematics, Dynamics, Position, Control and Simulation of robotic arm with MATLAB robotic toolbox
   url: https://github.com/SergiosKar/Robotic-Arm
   image: images/portofolio/robotic_arm.jpg
   tags:
     - Robotics
-  icon: github 
+  icon: github
