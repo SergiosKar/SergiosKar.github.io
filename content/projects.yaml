@@ -5,18 +5,38 @@
     
     We cover a wide range of topics  from Computer Vision and Natural Language Processing to Machine Learning Infrastructure, Medical Imaging and Reinforcement Learning.
   status: live
+  image: images/aisummer-image.png
   tags:
     - Deep Learning
     - Machine Learning
-  # icon: github 
 
 - name: Deep Learning in Production
   url: https://github.com/The-AI-Summer/Deep-Learning-In-Production
-  description: An article series and eBook exploring how to develop, deploy and scale Deep Learning pipelines with Tensorflow
-  status: live
+  description: |
+    An upcoming book exploring how to develop, deploy and scale Deep Learning pipelines with Tensorflow. The reader will learn:
+
+      •  how to design a deep learning system from scratch
+      •  how to structure and develop production-ready machine learning code
+      •  how to develop efficient and scalable data pipelines
+      •  how to make it available to the public by setting up a service on the cloud
+      •  how to scale and maintain the service as the user base grows
+  status: in progress
+  image: images/deep-learning-production-book.png
   tags:
     - MLOps
+    - Deep Learning
     - Tensorflow
+
+- name: HubSpot - Machine Learning Infrastructure team	
+  description: |
+    • The Machine Learning Infrastructure team is responsible for building and maintaining all Machine Learning services and pipelines inside HubSpot. Handled more than 1 billion requests per day and almost 70 machine learning models on production.
+
+    • Technologies used: Java, Python, MySQL, HBase, Hadoop, Kafka, AWS, Docker, Kubernetes
+  tags:
+    - Machine Learning
+    - MLOps
+    - Java
+  image: images/hubspot-logo.jpeg
 
 - name: Master thesis - Development of computer vision framework with deep learning techniques	
   url: https://nemertes.lis.upatras.gr/jspui/handle/10889/10955?mode=full
@@ -25,17 +45,31 @@
   
     The system supports fully connected and convolutional neural networks , which we implement in C++ from scratch. To speed up the training, we decided use parallelization and execute the training in GPU, which we programmed with the OpenCL library. Also OpenCV was used to parse and read the images and do all the necessary preprocessing of the dataset.
   tags:
+    - Deep Learning
     - GPU programming
     - Computer vision
+
+- name: Eworx SA
+  description:  |
+    • Built the core of a real-time Recommendation Engine with Python using Natural Language processing and Machine Learning techniques for Experly, a travelling web application.
+    
+    • Designed an in-house library for Source Code Analysis for different programming languages.
+    
+    • Implemented data science pipelines for tasks such as spell correction, language detection on different projects for European organizations such as CEDEFOP and Skills Panorama websites.
+  image: images/eworx-logo.jpg
+  tags:
+    - R
+    - Python
+    - Javascript
 - name: European Training Foundation Database
   description:  |
-    Architectured and developed a full-stack web application for the European Training Foundation (ETF). The purpose of the app is to store, organize and manipulate their data, perform validations and verifications on them and build reports for internal or external use.
+    During my time on Eworx SA, I developed a full-stack web application for the European Training Foundation (ETF). The purpose of the app is to store, organize and manipulate their data, perform validations and verifications on them and build reports for internal or external use.
 
     The user is able to add, edit or delete data from the browser using an excel-like table, create reports based on selected filters and build interactive visualizations such as Pie Charts, Bar Charts and Maps.
   image: images/portofolio/etf-db.jpg
   tags:
-    - Android
-    - Java
+    - R
+    - Javascript
 - name: Chill- Meet and Movie Date
   description:  Developed and published an Android app with a NoSQL database and a server
                 hosted in Google cloud. The app connects users via common interests in movies and tv shows and it organically

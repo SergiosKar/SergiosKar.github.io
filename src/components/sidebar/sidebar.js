@@ -32,6 +32,12 @@ const Sidebar = ({ profile, social }) => (
         </h5>
         <SocialLinks social={social} />
         <br />
+        {profile.scholar && (
+          <a className="no-underline hover:underline" href={profile.scholar}>
+            Google scholar
+          </a>
+        )}
+        <br />
         {profile.email && (
           <a
             className="no-underline hover:underline"

@@ -10,7 +10,7 @@ const Project = props => {
   return (
     <div className="border-t-4 border-line relative flex flex-wrap bg-back-light p-4 lg:p-8 bg-no-repeat text-sm mb-6">
       {image && (
-        <div className="w-full pb-4 lg:w-2/5 lg:pr-8 lg:pb-0">
+        <div className="flex flex-wrap content-center w-full pb-4 lg:w-2/5 lg:pr-8 lg:pb-0">
           <GatsbyImage image={image.childImageSharp.gatsbyImageData} alt={name} />
         </div>
       )}

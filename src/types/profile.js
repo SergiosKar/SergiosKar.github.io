@@ -23,6 +23,7 @@ export const ProfileType = {
   name: string.isRequired,
   profession: string.isRequired,
   relocation: bool.isRequired,
+  scholar: string.isRequired,
   skills: arrayOf(string).isRequired,
   tools: arrayOf(string).isRequired,
 }
@@ -52,6 +53,7 @@ export const query = graphql`
     name
     profession
     relocation
+    scholar
     skills
     tools
   }
