@@ -5,7 +5,7 @@ import "./work-history.css"
 const WorkHistory = ({ history }) => {
   return (
     <>
-      <h5 className="font-header font-semibold text-front text-sm uppercase mt-12 mb-3 text-center">
+      <h5 className="font-header font-semibold text-front text-lg uppercase mt-12 mb-3 text-center">
         Work history
       </h5>
       <div className="history flex flex-col relative pt-6 pb-6">
@@ -23,20 +23,20 @@ const WorkHistory = ({ history }) => {
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:opacity-75 transition-opacity duration-150"
+                  className="text-lg font-bold hover:opacity-75 transition-opacity duration-150"
                 >
                   {company}
                 </a>
               </h4>
             ) : (
-              <h4 className="subpixel-antialiased">{company}</h4>
+              <h4 className=" text-lg font-bold subpixel-antialiased">{company}</h4>
             )}
 
             {position && (
-              <h5 className="text-sm font-normal mb-1">{position}</h5>
+              <h5 className="text-lg font-normal mb-1">{position}</h5>
             )}
             {period && (
-              <span className="text-sm font-medium opacity-50">{period}</span>
+              <span className="text-lg font-medium opacity-50">{period}</span>
             )}
           </div>
         ))}

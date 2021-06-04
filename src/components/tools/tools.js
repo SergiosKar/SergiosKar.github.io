@@ -3,7 +3,7 @@ import { ProfileType } from "../../types"
 
 const Tools = ({ tools }) => (
   <>
-    <h5 className="font-header font-semibold text-front text-sm uppercase mb-3">
+    <h5 className="font-header font-semibold text-front text-lg uppercase mb-3">
       Main tools
     </h5>
     <ul className="flex-col mt-2">

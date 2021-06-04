@@ -15,10 +15,10 @@ const Project = props => {
         </div>
       )}
       <div className="lg:flex-1">
-        <h4 className="font-bold">{name}</h4>
+        <h4 className="font-bold text-lg">{name}</h4>
         {url && (
           <a
-            className="text-front underline break-all hover:opacity-75 transition-opacity duration-150"
+            className="text-lg text-front underline break-all hover:opacity-75 transition-opacity duration-150"
             href={url}
             rel="noreferrer noopener"
             target="_blank"
@@ -26,7 +26,7 @@ const Project = props => {
             {url}
           </a>
         )}
-        <p className="w-full py-4 whitespace-pre-line">{description}</p>
+        <p className="text-lg w-full py-4 whitespace-pre-line">{description}</p>
         <ul className="pr-2">
           {status && <ProjectStatus status={status} />}
           {tags && <ProjectTags tags={tags} />}
