@@ -1,7 +1,40 @@
+- name: Deep Learning in Production Book
+  url: https://amzn.to/3oa50Vj
+  description: |
+    Deep Leanrning in Production explores how to develop, deploy and scale Deep Learning pipelines with Tensorflow. The reader will learn:
+
+      •  how to design a deep learning system from scratch
+      •  how to structure and develop production-ready machine learning code
+      •  how to develop efficient and scalable data pipelines
+      •  how to make it available to the public by setting up a service on the cloud
+      •  how to scale and maintain the service as the user base grows
+  status: live
+  image: images/deep-learning-production-book.png
+  tags:
+    - MLOps
+    - Deep Learning
+    - Tensorflow
+
+- name: Introduction to Deep Learning and Neural Networks Course
+  url: https://www.educative.io/courses/intro-deep-learning/
+  description: |
+    The course provides to the student the basic concepts they need in order to start working with and training various machine learning models. 
+
+    Takeaway Skills:
+      • Understanding of the most popular Deep Learning models
+      • A solid grasp on the mathematics and the intuition behind the algorithms
+      • A good experience with Deep Learning Programming and Pytorch
+
+  status: live
+  image: images/intro-to-dl-course-cover.png
+  tags:
+    - Deep Learning
+    - Pytorch
+
 - name: AI Summer
   url: https://theaisummer.com/
   description: |
-    I founded AI Summer as a way to document my journey in Machine Learning. Now AI Summer is one of the biggest educational Deep Learning blogs globally with over 20.000 monthly visitors, a newsletter of 3000 emails and more than 80 highly detailed articles. 
+    I founded AI Summer as a way to document my journey in Machine Learning. Now AI Summer is one of the biggest educational Deep Learning blogs globally with over 40.000 monthly visitors, a newsletter of 3000 emails and almost 100 highly detailed articles. 
 
     We cover a wide range of topics  from Computer Vision and Natural Language Processing to Machine Learning Infrastructure, Medical Imaging and Reinforcement Learning.
   status: live
@@ -9,23 +42,6 @@
   tags:
     - Deep Learning
     - Machine Learning
-
-- name: Deep Learning in Production
-  url: https://github.com/The-AI-Summer/Deep-Learning-In-Production
-  description: |
-    An upcoming book exploring how to develop, deploy and scale Deep Learning pipelines with Tensorflow. The reader will learn:
-
-      •  how to design a deep learning system from scratch
-      •  how to structure and develop production-ready machine learning code
-      •  how to develop efficient and scalable data pipelines
-      •  how to make it available to the public by setting up a service on the cloud
-      •  how to scale and maintain the service as the user base grows
-  status: in progress
-  image: images/deep-learning-production-book.png
-  tags:
-    - MLOps
-    - Deep Learning
-    - Tensorflow
 
 - name: HubSpot - Machine Learning Infrastructure team
   description: |

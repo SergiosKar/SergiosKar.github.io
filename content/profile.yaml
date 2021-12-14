@@ -8,7 +8,7 @@
   company: AI Summer
   for_hire: false
   focus: Deep Learning and MLOps
-  focus_url: https://theaisummer.com/deep-learning-production/
+  focus_url: https://amzn.to/3oa50Vj
   email: sergioskarag@gmail.com
   about: |
     My name is Sergios and I am a Machine Learning Engineer. My main goal is to educate people about Deep Learning and help companies build their Artificial Intelligence products. Contributing to the AI community has been the common denominator to all my endeavors.
@@ -17,16 +17,17 @@
 
     AI Summer is the project that I'm most proud of. Over the past year, we reached a huge audience of AI researchers and aspiring ML Engineers, who are coming to our blog for learning and discussing about AI.
 
-    My last role in Hubspot as a part of the Machine Learning Infrastructure team sparked my interest in MLOps, which has been my main focus in the past months. The result? An upcoming book titled "Deep Learning in Production".
+    My last role in Hubspot as a part of the Machine Learning Infrastructure team sparked my interest in MLOps, which has been my main focus in the past months. The result? My first book titled "Deep Learning in Production".
 
   skills:
     - Deep Learning
     - Machine Learning Infrastructure
     - Computer Vision
   tools:
-    - Tensorflow
     - Pytorch
+    - Tensorflow
     - Docker
+    - Kubernetes
   scholar: 'https://scholar.google.com/citations?user=QaI3OWMAAAAJ&hl=en'
   budget:
     currency: $
